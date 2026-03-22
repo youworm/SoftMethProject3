@@ -1,7 +1,7 @@
 package com.example.project3.project2;
 
-import util.List;
-import util.Sort;
+import com.example.project3.util.List;
+import com.example.project3.util.Sort;
 
 /**
  * Represents a list of students and methods to manage the list

@@ -12,7 +12,7 @@ public class Section {
     private Instructor instructor;
     private Classroom classroom;
     private Time time; //can use other data types(int)
-    private Student[] roster;
+    private StudentList roster;;
     private int numStudents;
 
     /**
@@ -28,7 +28,7 @@ public class Section {
         this.time = time;
         this.instructor = instructor;
         this.classroom = classroom;
-        this.roster = new Student[CAPACITY]; //capacity 4
+        this.roster = new StudentList(); //capacity 4
         this.numStudents = 0;
     }
     /**
@@ -36,31 +36,26 @@ public class Section {
      * It does nothing if course is full or student is already enrolled.
      * @param student the student being enrolled
      */
-
     public void enroll(Student student) {
-        if (isFull()) { //when course is full
+        if (isFull()) {
             return;
         }
-        if (contains(student)) { //already enrolled
+        if (contains(student)) {
             return;
         }
-        //add student
-        roster[numStudents] = student;
+        roster.add(student);
         numStudents++;
     }
+
     /**
      * Remove the given student from the roster.
      * It does nothing if the student is not on the list.
      * @param student the student object to be removed from the list.
      */
     public void drop(Student student) {
-        for(int i = 0; i < numStudents; i++) {
-            if (roster[i] != null && roster[i].equals(student)) {
-                roster[i] = roster[numStudents - 1]; //replace student w last student then remove last student(duplicate)
-                roster[numStudents - 1] = null;
-                numStudents--;
-                return;
-            }
+        if (contains(student)) {
+            roster.remove(student);
+            numStudents--;
         }
     }
 
@@ -70,12 +65,7 @@ public class Section {
      * @return true if student is in the list.
      */
     public boolean contains(Student student) {
-        for(int i = 0; i < numStudents; i++) {
-            if (roster[i] != null && roster[i].equals(student)) { //** Student.equals should exist in student or student list
-                return true;
-            }
-        }
-        return false;
+        return roster.contains(student);
     }
 
     /**
@@ -97,17 +87,18 @@ public class Section {
     /**
      * prints the string
      */
-    public void print() {
-        System.out.println(this.toString());
+    public String print() {
+        String result = this.toString() + "\n";
 
         if (numStudents == 0) {
-            System.out.println("\t**No students enrolled**");
+            result += "\t**No students enrolled**\n";
         } else {
-            System.out.println("\t**Roster**");
+            result += "\t**Roster**\n";
             for (int i = 0; i < numStudents; i++) {
-                System.out.println("\t[" + roster[i].getProfile() + "]");
+                result += "\t[" + roster.get(i).getProfile() + "]\n";
             }
         }
+        return result;
     }
 
 
