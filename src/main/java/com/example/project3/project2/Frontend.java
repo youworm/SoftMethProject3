@@ -1,0 +1,915 @@
+package com.example.project3.project2;
+
+import util.Date;
+import util.Sort;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.util.Calendar;
+import java.util.Scanner;
+import java.util.StringTokenizer;
+
+/**
+ * Frontend handles all command-line interactions for the registration system.
+ * It parses user input, validates commands, and delegates operations to
+ * StudentList and Schedule.
+ *
+ * @author Joe Guan
+ */
+public class Frontend {
+    private static final int CREDIT_LIMIT_ALL = 20;
+    private static final int CREDIT_LIMIT_INTERNATIONAL_STUDY_ABROAD = 12;
+    private static final int FRESHMAN_CREDITS_THRESHOLD = 30;
+    private static final int SOPHOMORE_CREDITS_THRESHOLD = 60;
+    private static final int JUNIOR_CREDITS_THRESHOLD = 90;
+
+    private StudentList studentList;
+    private Schedule schedule;
+
+    /**
+     * Constructs a Frontend instance and initializes the student list
+     * and course schedule.
+     */
+    public Frontend() {
+        studentList = new StudentList();
+        schedule = new Schedule();
+    }
+
+    /**
+     * Runs the main command-processing loop for the registration system.
+     */
+    public void run() {
+        System.out.println("Registration System is running.");
+        Scanner scanner = new Scanner(System.in);
+
+        while (scanner.hasNextLine()) {
+            String line = scanner.nextLine().trim();
+            if (line.isEmpty()) {
+                continue;
+            }
+
+            StringTokenizer st = new StringTokenizer(line);
+            String command = st.nextToken();
+
+            if (command.equals("Q")) {
+                System.out.println("Registration System is terminated.");
+                scanner.close();
+                return;
+            }
+            processCommand(command, st);
+
+        }
+    }
+
+    /**
+     * Accepts a string and processes the corresponding command
+     * @param command to be processed
+     * @param st string tokenizer
+     */
+    private void processCommand(String command, StringTokenizer st) {
+        switch (command) {
+            case "AR", "AN", "AT", "AI" -> handleAdd(command, st);
+            case "R" -> handleRemove(st);
+            case "E" -> handleEnroll(st);
+            case "D" -> handleDrop(st);
+            case "C" -> handleClose(st);
+            case "O" -> offer(st);
+            case "PL" -> schedule.printByClassroom();
+            case "PC" -> schedule.printByCourse();
+            case "PS" -> studentList.print();
+            case "S" -> handleScholarship(st);
+            case "L" -> handleLoad();
+            case "PT" -> handleTuition();
+            case "PG" -> handleGraduates();
+            default -> System.out.println(command + " is an invalid command!");
+        }
+    }
+    /**
+     * Gets student type as a string
+     * Helper method for handle tuition and handle add
+     * @param student to get type from
+     * @return Tristate, Resident, Noresident, International study abroad, or International
+     */
+    private static String getStudentType(Student student) {
+        String studentType = "";
+        if (student instanceof TriState tri) {
+            studentType = "Tristate: " + tri.getState();
+        } else if (student instanceof International intl) {
+            studentType = intl.isStudyAbroad() ? "International study abroad" : "International";
+        } else if (student instanceof NonResident) {
+            studentType = "Noresident";
+        } else if (student instanceof Resident) {
+            studentType = "Resident";
+        }
+        return studentType;
+    }
+
+    /**
+     * Parses a date string in MM/DD/YYYY format into a Date object.
+     *
+     * @param dobStr the date string
+     * @return a Date object representing the parsed date
+     */
+    private Date parseDate(String dobStr) {
+        String[] parts = dobStr.split("/");
+        int month = Integer.parseInt(parts[0]);
+        int day = Integer.parseInt(parts[1]);
+        int year = Integer.parseInt(parts[2]);
+        return new Date(year, month, day);
+    }
+
+    /**
+     * Finds a student in the student list by profile.
+     *
+     * @param profile the student's profile
+     * @return the matching Student or null if not found
+     */
+    private Student findStudent(Profile profile) {
+        for (Student s : studentList) {
+            if (s != null && s.getProfile().equals(profile)) {
+                return s;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Parses a course code into a Course enum.
+     *
+     * @param courseCode the course code string
+     * @return the corresponding Course or null if invalid
+     */
+    private Course parseCourse(String courseCode) {
+        for (Course c : Course.values()) {
+            if (c.name().equals(courseCode.toUpperCase())) {
+                return c;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Parses a period string into a Time enum.
+     *
+     * @param periodStr the period number as a string
+     * @return the corresponding Time or null if invalid
+     */
+    private Time parseTime(String periodStr) {
+        try {
+            int period = Integer.parseInt(periodStr);
+            return Time.getTime(period);
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    /**
+     * Finds a section by course and time.
+     *
+     * @param course the course
+     * @param time   the time period
+     * @return the matching Section or null if not found
+     */
+    private Section findSection(Course course, Time time) {
+        for (Section s : schedule.getSections()) {
+            if (s != null && s.getCourse() == course && s.getTime() == time) {
+                return s;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Checks whether a student is enrolled in any section.
+     *
+     * @param student the student
+     * @return true if enrolled, false otherwise
+     */
+    private boolean isStudentEnrolled(Student student) {
+        for (Section s : schedule.getSections()) {
+            if (s != null && s.contains(student)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Determines a student's academic standing based on completed credits.
+     *
+     * @param student the student
+     * @return the standing string
+     */
+    private String getStanding(Student student) {
+        int credits = student.getCreditCompleted();
+        if (credits < FRESHMAN_CREDITS_THRESHOLD) return "Freshman";
+        if (credits < SOPHOMORE_CREDITS_THRESHOLD) return "Sophomore";
+        if (credits < JUNIOR_CREDITS_THRESHOLD) return "Junior";
+        return "Senior";
+    }
+
+    /**
+     * Checks if enrolling would cause a time conflict for the student.
+     *
+     * @param student the student
+     * @param time    the time period
+     * @return true if a conflict exists, false otherwise
+     */
+    private boolean hasTimeConflict(Student student, Time time) {
+        for (Section s : schedule.getSections()) {
+            if (s != null && s.contains(student)
+                    && s.getTime().equals(time)) {
+                System.out.println(
+                        "Time conflict: [" + student.getProfile()
+                                + "] enrolled in another class at period "
+                                + time.getPeriod());
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Checks whether enrolling in a new course would exceed the credit limit.
+     *
+     * @param student   the student
+     * @param newCourse the course to be added
+     * @return true if credit limit would be exceeded, false otherwise
+     */
+    private boolean exceedsCreditLimit(Student student, Course newCourse) {
+        int totalCredits = 0;
+
+        for (Section s : schedule.getSections()) {
+            if (s != null && s.contains(student)) {
+                totalCredits += s.getCourse().getCredits();
+            }
+        }
+
+        int newTotal = totalCredits + newCourse.getCredits();
+
+        if (student instanceof International intl && intl.isStudyAbroad()) {
+            if (newTotal > CREDIT_LIMIT_INTERNATIONAL_STUDY_ABROAD) {
+                System.out.println(
+                        "International student study abroad cannot enroll more than 12 credits.");
+                return true;
+            }
+        } else {
+            if (newTotal > CREDIT_LIMIT_ALL) {
+                System.out.println(
+                        "Cannot enroll [" + student.getProfile() + "]; now has " + totalCredits
+                                + " will exceeds credit limit of " + CREDIT_LIMIT_ALL + ".");
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Parses an instructor name into an Instructor enum.
+     *
+     * @param instructorStr the instructor name
+     * @return the Instructor or null if invalid
+     */
+    private Instructor parseInstructor(String instructorStr) {
+        for (Instructor i : Instructor.values()) {
+            if (i.name().equalsIgnoreCase(instructorStr)) {
+                return i;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Checks if an instructor has a time conflict.
+     *
+     * @param instructor the instructor
+     * @param time       the time period
+     * @return true if a conflict exists, false otherwise
+     */
+    private boolean hasInstructorTimeConflict(Instructor instructor, Time time) {
+        for (Section s : schedule.getSections()) {
+            if (s != null &&
+                    s.getInstructor().equals(instructor) &&
+                    s.getTime().equals(time)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Parses a classroom identifier into a Classroom enum.
+     *
+     * @param roomStr the room identifier
+     * @return the Classroom or null if invalid
+     */
+    private Classroom parseClassroom(String roomStr) {
+        for (Classroom r : Classroom.values()) {
+            if (r.getRoomNumber().equalsIgnoreCase(roomStr)) {
+                return r;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Checks if a classroom is available at a given time.
+     *
+     * @param classroom the classroom
+     * @param time      the time period
+     * @return true if available, false otherwise
+     */
+    private boolean isClassroomAvailable(Classroom classroom, Time time) {
+        for (Section s : schedule.getSections()) {
+            if (s != null &&
+                    s.getClassroom().equals(classroom) &&
+                    s.getTime().equals(time)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Converts a standing string into a numeric level.
+     *
+     * @param standing the standing string
+     * @return the standing level
+     */
+    private int standingLevel(String standing) {
+        switch (standing) {
+            case "Freshman":
+                return 1;
+            case "Sophomore":
+                return 2;
+            case "Junior":
+                return 3;
+            case "Senior":
+                return 4;
+            default:
+                return 0;
+        }
+    }
+
+    /**
+     * Recalculate credits as current credits plus enrolled credits
+     * @param student to check credits
+     * @return integer of total credits
+     */
+    private int recalcCredits(Student student) {
+        int total = student.getCreditCompleted();
+
+        for (Section section : schedule.getSections()) {
+            if (section != null && section.contains(student)) {
+                total += section.getCourse().getCredits();
+            }
+        }
+
+        return total;
+    }
+
+
+    /**
+     * Handles adding students with different resident statuses.
+     * Supports AR (Resident), AN (NonResident), AT (TriState), AI (International)
+     */
+    private void handleAdd(String command, StringTokenizer st) {
+        try {
+            String fname = st.nextToken();
+            String lname = st.nextToken();
+            Date dob = parseDate(st.nextToken());
+            String majorStr = st.nextToken().toUpperCase();
+            String creditToken = st.nextToken(); // ← capture token first
+            int credits;
+            try {
+                credits = Integer.parseInt(creditToken);
+            } catch (NumberFormatException e) {
+                System.out.println("INVALID: " + creditToken + " is not an integer!");
+                return;
+            }
+            Major major = null;
+            for (Major m : Major.values()) { if (m.name().equals(majorStr)) major = m; }
+
+            if (major == null) { System.out.println("INVALID: " + majorStr + " major does not exist. "); return; }
+
+            if (!dob.isValid()) { System.out.println("INVALID: " + dob + " is not a valid calendar date!"); return; }
+
+            Calendar today = Calendar.getInstance();
+            Calendar birth = Calendar.getInstance();
+            birth.set(dob.getYear(), dob.getMonth() - 1, dob.getDay());
+
+            if (!birth.before(today)) {
+                System.out.println("INVALID: " + dob + " cannot be today or a future day.");
+                return;
+            }
+
+            int age = today.get(Calendar.YEAR) - dob.getYear();
+            if (today.get(Calendar.DAY_OF_YEAR) < birth.get(Calendar.DAY_OF_YEAR)) age--;
+            if (age < 16) {
+                System.out.println("INVALID: " + dob + " younger than 16 years old.");
+                return;
+            }
+
+            if (credits < 0) {
+                System.out.println("INVALID: " + credits + " credit is negative!");
+                return;
+            }
+
+            Profile profile = new Profile(fname, lname, dob);
+            Student student = null;
+
+            String studentType = "";
+            switch (command) {
+                case "AR": student = new Resident(profile, major, credits); studentType = "Resident"; break;
+                case "AN": student = new NonResident(profile, major, credits); studentType = "Non-Resident"; break;
+                case "AT":
+                    String state = st.nextToken().toUpperCase();
+                    boolean isValidState = isValidState(state);
+                    if (!isValidState) {
+                        System.out.println(state + ": Invalid state code.");
+                        return;
+                    }
+                    student = new TriState(profile, major, credits, state);
+                    studentType = "Tristate: " + ((TriState) student).getState();
+                    break;
+                case "AI":
+                    boolean studyAbroad = Boolean.parseBoolean(st.nextToken());
+                    student = new International(profile, major, credits, studyAbroad);
+                    International intl = (International) student;
+                    studentType = intl.isStudyAbroad() ? "International study abroad" : "International";
+                    break;
+            }
+
+            if (studentList.contains(student)) {
+                System.out.println("[" + profile + "] student is already in the list.");
+                return;
+            }
+
+            studentList.add(student);
+            System.out.println("[" + profile + "][" + studentType + "] added to the list.");
+
+        } catch (Exception e) { System.out.println("Missing data tokens.");}
+    }
+
+    /**
+     * Checks for valid state code for Tristate students
+     * @param str, code to be checked
+     * @return true if the code is valid, false otherwise.
+     */
+    public boolean isValidState(String str) {
+        String[] validStates = {"NY", "CT", "NJ"};
+        for (String s : validStates) {
+            if (s.equals(str)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+
+    /**
+     * Handles the remove-student command.
+     *
+     * @param st the command tokenizer
+     */
+    private void handleRemove(StringTokenizer st) {
+        Profile profile = new Profile(
+                st.nextToken(),
+                st.nextToken(),
+                parseDate(st.nextToken())
+        );
+
+        Student student = findStudent(profile);
+        if (student == null) {
+            System.out.println("[" + profile + "] is not in the student list.");
+            return;
+        }
+
+        if (isStudentEnrolled(student)) {
+            System.out.println("[" + profile + "] already enrolled in a section.");
+            return;
+        }
+
+        studentList.remove(student);
+        System.out.println("[" + profile + "] removed from the list.");
+    }
+
+    /**
+     * Handles the enroll command.
+     *
+     * @param st the command tokenizer
+     */
+    private void handleEnroll(StringTokenizer st) {
+        Profile profile = new Profile(
+                st.nextToken(),
+                st.nextToken(),
+                parseDate(st.nextToken())
+        );
+
+        String courseCode = st.nextToken();
+        Course course = parseCourse(courseCode);
+        String period = st.nextToken();
+        Time time = parseTime(period);
+        Student student = findStudent(profile);
+
+        if (student == null) {
+            System.out.println("INVALID: [" + profile + "] does not exist.");
+            return;
+        }
+        if (course == null) {
+            System.out.println("INVALID: course name " + courseCode + " does not exist.");
+            return;
+        }
+        if (time == null) {
+            System.out.println("INVALID: period " + period + " does not exist.");
+            return;
+        }
+
+        Section section = findSection(course, time);
+        if (section == null) {
+            System.out.println("INVALID: " + course + " " + time + " does not exist.");
+            return;
+        }
+
+        for (Section s : schedule.getSections()) {
+            if (s != null && s.contains(student) && s.getCourse() == course) {
+                System.out.println("[" + profile + "] already enrolled in " + course);
+                return;
+            }
+        }
+
+        String standingReq = course.getStandingPrereq();
+        String standing = getStanding(student);
+        if (standingReq != null) {
+            int requiredLevel = standingLevel(standingReq);
+            int studentLevel = standingLevel(standing);
+
+            if (studentLevel < requiredLevel) {
+                System.out.println(
+                        "Prereq: " + standingReq + " - [" + profile + "] [" + standing + "]"
+                );
+                return;
+            }
+        }
+
+        String majorReq = course.getMajorPrereq();
+        if (majorReq != null && !majorReq.equals(student.getMajor().getCode())) {
+            System.out.println("Prereq: major only - [" + profile + "] [" + student.getMajor().getCode() + "]");
+            return;
+        }
+
+        if (hasTimeConflict(student, time)) {
+            return;
+        }
+
+        if (exceedsCreditLimit(student, course)) {
+            return;
+        }
+
+        if (section.isFull()) {
+            System.out.println("Cannot enroll [" + profile + "], " + section.getCourse() + " " + section.getTime()
+                    + " is full.");
+            return;
+        }
+
+        section.enroll(student);
+        System.out.println("[" + profile + "] added to " + course + " " + time);
+    }
+
+    /**
+     * Handles the drop command.
+     *
+     * @param st the command tokenizer
+     */
+    private void handleDrop(StringTokenizer st) {
+        Profile profile = new Profile(st.nextToken(), st.nextToken(), parseDate(st.nextToken()));
+
+        String courseStr = st.nextToken();
+        Course course = parseCourse(courseStr);
+
+        String periodStr = st.nextToken();
+        Time time = parseTime(periodStr);
+        Student student = findStudent(profile);
+
+        if (course == null) {
+            System.out.println("INVALID: course name " + courseStr + " does not exist.");
+            return;
+        }
+
+        if (time == null) {
+            System.out.println("INVALID: period " + periodStr + " does not exist.");
+            return;
+        }
+        Section section = findSection(course, time);
+        if (section == null || !section.contains(student)) {
+            System.out.println("[" + profile + "] is not enrolled in this section.");
+            return;
+        }
+
+        section.drop(student);
+        System.out.println("[" + profile + "] dropped from " + course + " " + time);
+    }
+
+    /**
+     * Handles the close-section command.
+     *
+     * @param st the command tokenizer
+     */
+    private void handleClose(StringTokenizer st) {
+        String courseStr = st.nextToken();
+        Course course = parseCourse(courseStr);
+        String periodStr = st.nextToken();
+        Time time = parseTime(periodStr);
+
+        if (course == null) {
+            System.out.println("INVALID: course name " + courseStr + " does not exist.");
+            return;
+        }
+
+        if (time == null) {
+            System.out.println("INVALID: period " + periodStr + " does not exist.");
+            return;
+        }
+
+        Section section = findSection(course, time);
+        if (section == null) {
+            System.out.println(course + " " + time + " does not exist.");
+            return;
+        }
+
+        if (!section.isEmpty()) {
+            System.out.println(course + " " + time +
+                    " cannot be removed [" + section.getNumStudents() + " student(s) enrolled]");
+            return;
+        }
+
+        schedule.remove(section);
+        System.out.println(course + " " + time + " removed.");
+    }
+
+
+    /**
+     * Handles the offer-section command.
+     *
+     * @param st the command tokenizer
+     */
+    private void offer(StringTokenizer st) {
+        if (st.countTokens() != 4) {
+            System.out.println("Invalid command.");
+            return;
+        }
+        String courseStr = st.nextToken();
+        Course course = parseCourse(courseStr);
+        if (course == null) { System.out.println("INVALID: course name " + courseStr + " does not exist."); return; }
+
+        String periodStr = st.nextToken();
+        Time time = parseTime(periodStr);
+        if (time == null) { System.out.println("INVALID: period " + periodStr + " does not exist."); return; }
+
+        if (findSection(course, time) != null) {
+            System.out.println("INVALID: " + course + " period " + time.getPeriod() + " already exists.");
+            return;
+        }
+
+        String instructorStr = st.nextToken();
+        Instructor instructor = parseInstructor(instructorStr);
+        if (instructor == null) { System.out.println("INVALID: faculty " + instructorStr + " does not exist."); return;}
+
+        if (hasInstructorTimeConflict(instructor, time)) {
+            System.out.println("INVALID: " + instructor + " time conflict."); return;
+        }
+
+        String roomStr = st.nextToken().toUpperCase();
+        Classroom classroom = parseClassroom(roomStr);
+        if (classroom == null) {
+            System.out.println("INVALID: location " + roomStr.toLowerCase() + " does not exist."); return;
+        }
+
+        if (!isClassroomAvailable(classroom, time)) {
+            System.out.println("INVALID: [" + classroom + "] not available."); return;
+        }
+
+        Section section = new Section(course, time, instructor, classroom);
+        schedule.add(section);
+        System.out.println("[" + course + " " + time + "] [" + instructor + "] [" + classroom + "] added to the schedule.");
+    }
+
+    /**
+     * Loads students from the text file "students.txt".
+     * Each line represents a Student.
+     * Resident status: R=Resident, N=Non-Resident, T=Tristate, I=International
+     * Invalid lines are skipped with a message.
+     */
+    private void handleLoad() {
+        File file = new File("students.txt");
+        if (!file.exists()) {
+            System.out.println("File students.txt not found.");
+            return;
+        }
+
+        try (Scanner fileScanner = new Scanner(file)) {
+            while (fileScanner.hasNextLine()) {
+                String line = fileScanner.nextLine().trim();
+                if (line.isEmpty()) continue;
+
+                StringTokenizer st = new StringTokenizer(line);
+                try {
+                    // First token is resident status
+                    String resStatus = st.nextToken().toUpperCase();
+                    String fname = st.nextToken();
+                    String lname = st.nextToken();
+                    Date dob = parseDate(st.nextToken());
+                    String majorStr = st.nextToken().toUpperCase();
+                    int credits = Integer.parseInt(st.nextToken());
+
+                    Major major = null;
+                    for (Major m : Major.values()) {
+                        if (m.name().equals(majorStr)) major = m;
+                    }
+                    if (major == null) {
+                        System.out.println("INVALID: " + majorStr + " major does not exist.");
+                        continue;
+                    }
+
+                    if (!dob.isValid()) {
+                        System.out.println("INVALID: " + dob + " is not a valid calendar date!");
+                        continue;
+                    }
+
+                    Profile profile = new Profile(fname, lname, dob);
+                    Student student;
+                    String studentType;
+                    switch (resStatus) {
+                        case "R":
+                            studentType = "Resident";
+                            student = new Resident(profile, major, credits);
+                            break;
+                        case "N":
+                            studentType = "Noresident";
+                            student = new NonResident(profile, major, credits);
+                            break;
+                        case "T":
+
+                            String stateStr = st.nextToken();
+                            studentType = "Tristate: " + stateStr;
+                            student = new TriState(profile, major, credits, stateStr);
+                            break;
+                        case "I":
+                            boolean abroadI = Boolean.parseBoolean(st.nextToken());
+                            student = new International(profile, major, credits, abroadI);
+                            studentType = abroadI ? "International study abroad" : "International";
+                            break;
+                        default:
+                            System.out.println("INVALID: unknown resident status " + resStatus);
+                            continue;
+                    }
+
+                    if (studentList.contains(student)) {
+                        System.out.println("[" + profile + "] student is already in the list.");
+                        continue;
+                    }
+
+                    studentList.add(student);
+                    System.out.println("[" + profile + "][" + studentType + "] added to the list.");
+
+                } catch (Exception e) {
+                    System.out.println("INVALID line: " + line);
+                }
+            }
+        }
+        catch (FileNotFoundException e) {
+            System.out.println("Error reading students.txt");
+        }
+        System.out.println("student list loaded from the text file.");
+
+    }
+
+    /**
+     * Handles the S command to set scholarship for a Resident student.
+     * Only full-time Resident students are eligible.
+     *
+     * @param st the tokenizer containing the command tokens
+     */
+    private void handleScholarship(StringTokenizer st) {
+        try {
+            String fname = st.nextToken();
+            String lname = st.nextToken();
+            Date dob = parseDate(st.nextToken());
+            int amount;
+            try {
+                amount = Integer.parseInt(st.nextToken());
+            } catch (NumberFormatException e) {
+                System.out.println("INVALID: amount is not an integer.");
+                return;
+            }
+
+            Profile profile = new Profile(fname, lname, dob);
+            Student student = findStudent(profile);
+
+            if (student == null) { System.out.println("[" + profile + "] is not in the student list."); return; }
+
+            if (!(student instanceof Resident)) {
+                System.out.println("[" + profile + "] is a non-resident not eligible for the scholarship."); return;
+            }
+
+            Resident resident = (Resident) student;
+            int enrolledCredits = 0;
+            for (Section s : schedule.getSections()) {
+                if (s.contains(resident)) { enrolledCredits += s.getCourse().getCredits(); }
+            }
+            if (enrolledCredits < 12) {
+                System.out.println("[" + profile + "] enrolled less than 12 credits, not eligible for the scholarship.");
+                return;
+            }
+            if (amount < 0 || amount > 10000) {
+                System.out.println("INVALID: scholarship amount cannot be 0 or negative or greater than $10,000.");
+                return;
+            }
+            resident.setScholarship(amount);
+            System.out.println("Scholarship $" + String.format("%,d", amount) + " updated for [" + profile + "]");
+        }
+        catch (Exception e) { System.out.println("Invalid command."); }
+    }
+
+
+
+    /**
+     * Prints all student's tuition by profile
+     */
+    private void handleTuition() {
+        if (studentList.isEmpty()) { System.out.println("Schedule is empty!"); return; }
+        
+        Sort.sortByProfile(studentList);
+        System.out.println("* Tuition dues ordered by student. *");
+
+        for (Student student : studentList) {
+            Profile profile = student.getProfile();
+            int totalCredits = 0;
+
+            String studentType = getStudentType(student);
+
+            System.out.println("[" + profile + "][" + studentType + "]");
+
+            // Loop through schedule to find this student's enrollments
+            for (Section section : schedule.getSections()) {
+                if (section.contains(student)) {
+                    int credits = section.getCourse().getCredits();
+                    totalCredits += credits;
+
+                    System.out.println("\t\t" + section.getCourse()
+                            + "[" + section.getTime() + "] [credit: " + credits + "]");
+                }
+            }
+
+            if (student instanceof International intl && !intl.isStudyAbroad() && totalCredits < 12) {
+                System.out.println("\t\t**International student must enroll at least 12 credits."); continue;
+            }
+
+            if (totalCredits == 0) {
+                System.out.println("**not enrolled."); continue;
+            }
+
+            double tuition = student.tuition(totalCredits);
+
+            System.out.println("\t\t**Total credits enrolled: " + totalCredits +
+                    " [tuition due: $" + String.format("%,.2f", tuition) + "]");
+        }
+        System.out.println("* end of list *");
+    }
+
+
+
+
+    /**
+     * prints all students eligible for graduation
+     */
+    private void handleGraduates() {
+        StudentList graduates = new StudentList();
+
+        for (Student student : studentList) {
+            int totalCredits = recalcCredits(student);
+
+            if (totalCredits >= 120) {
+                graduates.add(student);
+            }
+        }
+
+        if (graduates.isEmpty()) {
+            System.out.println("Schedule is empty!");
+            return;
+        }
+
+        Sort.sortByMajor(graduates);
+
+        System.out.println("* List of students eligible for graduation, ordered by major *");
+
+        for (Student s : graduates) {
+            String profileStr = "[" + s.getProfile() + "]";
+            String majorStr = "[" + s.getMajor().getCode() + "," + s.getMajor().getSchool() + "]";
+            System.out.println(profileStr + majorStr);
+        }
+
+        System.out.println("* end of list *");
+    }
+}
