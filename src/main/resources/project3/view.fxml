@@ -51,6 +51,59 @@
       </GridPane>
     </Tab>
 
+    <Tab text="Remove Student">
+        <GridPane hgap="10" vgap="10">
+        <padding>
+          <Insets top="10" right="10" bottom="10" left="10"/>
+        </padding>
+
+        <Label text="First Name:" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+        <TextField fx:id="removeFnameField" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+
+        <Label text="Last Name:" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+        <TextField fx:id="removeLnameField" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+
+        <Label text="DOB (MM/DD/YYYY):" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+        <TextField fx:id="removeDobField" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+        <Button text="Remove Student" onAction="#handleRemove"
+                GridPane.rowIndex="3" GridPane.columnIndex="1"/>
+      </GridPane>
+    </Tab>
+
+    <Tab text="Enroll Student">
+      <GridPane hgap="10" vgap="10">
+        <padding>
+          <Insets top="10" right="10" bottom="10" left="10"/>
+        </padding>
+
+        <!-- First Name -->
+        <Label text="First Name:" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+        <TextField fx:id="enrollFnameField" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+
+        <!-- Last Name -->
+        <Label text="Last Name:" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+        <TextField fx:id="enrollLnameField" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+
+        <!-- DOB -->
+        <Label text="DOB (MM/DD/YYYY):" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+        <TextField fx:id="enrollDobField" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+
+        <!-- Course -->
+        <Label text="Course Code:" GridPane.rowIndex="3" GridPane.columnIndex="0"/>
+        <TextField fx:id="enrollCourseCodeField" GridPane.rowIndex="3" GridPane.columnIndex="1"/>
+
+        <!-- Period -->
+        <Label text="Period:" GridPane.rowIndex="4" GridPane.columnIndex="0"/>
+        <TextField fx:id="enrollPeriodField" GridPane.rowIndex="4" GridPane.columnIndex="1"/>
+
+        <!-- Button -->
+        <Button text="Enroll"
+                onAction="#handleEnroll"
+                GridPane.rowIndex="5"
+                GridPane.columnIndex="1"/>
+      </GridPane>
+    </Tab>
+
     <!-- OUTPUT TAB -->
     <Tab text="Output">
       <VBox spacing="10">
@@ -61,15 +114,18 @@
         <!-- Text area for displaying output -->
         <TextArea fx:id="outputArea" prefHeight="400" wrapText="true"/>
 
-        <!-- Buttons to trigger commands
+        <!-- Buttons to trigger commands -->
         <HBox spacing="10">
-          <Button text="Print Students" onAction="#handlePrintStudents"/>
-          <Button text="Print Schedule" onAction="#handlePrintSchedule"/>
-          <Button text="Clear" onAction="#handleClear"/>
+          <Button text="Print by Classroom" onAction="#handlePrintByClassroom"/>
+          <Button text="Print by Course" onAction="#handlePrintByCourse"/>
+          <Button text="Print Student List" onAction="#handlePrintStudentList"/>
+
         </HBox>
-        -->
+
       </VBox>
     </Tab>
+
+
 
 
   </tabs>

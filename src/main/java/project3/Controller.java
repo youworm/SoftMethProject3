@@ -43,14 +43,32 @@ public class Controller {
     @FXML
     private TextField addStateField;      // Only used for TriState
     @FXML
-    private CheckBox addStudyAbroadCheck; // for International students
-
+    private CheckBox addStudyAbroadCheck; // for International student
     @FXML
     private RadioButton residentRadio, nonResidentRadio, triStateRadio, internationalRadio;
-
+    @FXML
     private ToggleGroup addResidencyGroup = new ToggleGroup();
 
+    // Remove student fields
     @FXML
+    private TextField removeFnameField;
+    @FXML
+    private TextField removeLnameField;
+    @FXML
+    private TextField removeDobField;
+
+    // Enroll student fields
+    @FXML
+    private TextField enrollFnameField;
+    @FXML
+    private TextField enrollLnameField;
+    @FXML
+    private TextField enrollDobField;
+    @FXML
+    private TextField enrollCourseCodeField;
+    @FXML
+    private TextField enrollPeriodField;
+
     public void initialize() {
         residentRadio.setToggleGroup(addResidencyGroup);
         nonResidentRadio.setToggleGroup(addResidencyGroup);
@@ -211,7 +229,7 @@ public class Controller {
         for (Section s : schedule.getSections()) {
             if (s != null && s.contains(student)
                     && s.getTime().equals(time)) {
-                System.out.println(
+                print(
                         "Time conflict: [" + student.getProfile()
                                 + "] enrolled in another class at period "
                                 + time.getPeriod());
@@ -241,13 +259,13 @@ public class Controller {
 
         if (student instanceof International intl && intl.isStudyAbroad()) {
             if (newTotal > CREDIT_LIMIT_INTERNATIONAL_STUDY_ABROAD) {
-                System.out.println(
+                print(
                         "International student study abroad cannot enroll more than 12 credits.");
                 return true;
             }
         } else {
             if (newTotal > CREDIT_LIMIT_ALL) {
-                System.out.println(
+                print(
                         "Cannot enroll [" + student.getProfile() + "]; now has " + totalCredits
                                 + " will exceeds credit limit of " + CREDIT_LIMIT_ALL + ".");
                 return true;
@@ -473,70 +491,70 @@ public class Controller {
     /**
      * Handles the remove-student command.
      *
-     * @param st the command tokenizer
      */
-    private void handleRemove(StringTokenizer st) {
+    @FXML
+    private void handleRemove() {
         Profile profile = new Profile(
-                st.nextToken(),
-                st.nextToken(),
-                parseDate(st.nextToken())
+                removeFnameField.getText(),
+                removeLnameField.getText(),
+                parseDate(removeDobField.getText())
         );
 
         Student student = findStudent(profile);
         if (student == null) {
-            System.out.println("[" + profile + "] is not in the student list.");
+            print("[" + profile + "] is not in the student list.");
             return;
         }
 
         if (isStudentEnrolled(student)) {
-            System.out.println("[" + profile + "] already enrolled in a section.");
+            print("[" + profile + "] already enrolled in a section.");
             return;
         }
 
         studentList.remove(student);
-        System.out.println("[" + profile + "] removed from the list.");
+        print("[" + profile + "] removed from the list.");
     }
 
     /**
      * Handles the enroll command.
      *
-     * @param st the command tokenizer
      */
-    private void handleEnroll(StringTokenizer st) {
+    @FXML
+    private void handleEnroll() {
         Profile profile = new Profile(
-                st.nextToken(),
-                st.nextToken(),
-                parseDate(st.nextToken())
+                enrollFnameField.getText(),
+                enrollLnameField.getText(),
+                parseDate(enrollDobField.getText())
         );
 
-        String courseCode = st.nextToken();
+        String courseCode = enrollCourseCodeField.getText();
         Course course = parseCourse(courseCode);
-        String period = st.nextToken();
+        String period = enrollPeriodField.getText();
         Time time = parseTime(period);
         Student student = findStudent(profile);
 
         if (student == null) {
-            System.out.println("INVALID: [" + profile + "] does not exist.");
+            print("INVALID: [" + profile + "] does not exist.");
             return;
         }
         if (course == null) {
-            System.out.println("INVALID: course name " + courseCode + " does not exist.");
+            print("INVALID: course name " + courseCode + " does not exist.");
             return;
         }
         if (time == null) {
-            System.out.println("INVALID: period " + period + " does not exist.");
+            print("INVALID: period " + period + " does not exist.");
             return;
         }
 
         Section section = findSection(course, time);
         if (section == null) {
-            System.out.println("INVALID: " + course + " " + time + " does not exist.");
+            print("INVALID: " + course + " " + time + " does not exist.");
             return;
         }
 
         for (Section s : schedule.getSections()) {
             if (s != null && s.contains(student) && s.getCourse() == course) {
-                System.out.println("[" + profile + "] already enrolled in " + course);
+                print("[" + profile + "] already enrolled in " + course);
                 return;
             }
         }
@@ -548,7 +566,7 @@ public class Controller {
             int studentLevel = standingLevel(standing);
 
             if (studentLevel < requiredLevel) {
-                System.out.println(
+                print(
                         "Prereq: " + standingReq + " - [" + profile + "] [" + standing + "]"
                 );
                 return;
@@ -557,7 +575,7 @@ public class Controller {
 
         String majorReq = course.getMajorPrereq();
         if (majorReq != null && !majorReq.equals(student.getMajor().getCode())) {
-            System.out.println("Prereq: major only - [" + profile + "] [" + student.getMajor().getCode() + "]");
+            print("Prereq: major only - [" + profile + "] [" + student.getMajor().getCode() + "]");
             return;
         }
 
@@ -570,13 +588,13 @@ public class Controller {
         }
 
         if (section.isFull()) {
-            System.out.println("Cannot enroll [" + profile + "], " + section.getCourse() + " " + section.getTime()
+            print("Cannot enroll [" + profile + "], " + section.getCourse() + " " + section.getTime()
                     + " is full.");
             return;
         }
 
         section.enroll(student);
-        System.out.println("[" + profile + "] added to " + course + " " + time);
+        print("[" + profile + "] added to " + course + " " + time);
     }
 
     /**
@@ -595,22 +613,22 @@ public class Controller {
         Student student = findStudent(profile);
 
         if (course == null) {
-            System.out.println("INVALID: course name " + courseStr + " does not exist.");
+            print("INVALID: course name " + courseStr + " does not exist.");
             return;
         }
 
         if (time == null) {
-            System.out.println("INVALID: period " + periodStr + " does not exist.");
+            print("INVALID: period " + periodStr + " does not exist.");
             return;
         }
         Section section = findSection(course, time);
         if (section == null || !section.contains(student)) {
-            System.out.println("[" + profile + "] is not enrolled in this section.");
+            print("[" + profile + "] is not enrolled in this section.");
             return;
         }
 
         section.drop(student);
-        System.out.println("[" + profile + "] dropped from " + course + " " + time);
+        print("[" + profile + "] dropped from " + course + " " + time);
     }
 
     /**
@@ -625,29 +643,29 @@ public class Controller {
         Time time = parseTime(periodStr);
 
         if (course == null) {
-            System.out.println("INVALID: course name " + courseStr + " does not exist.");
+            print("INVALID: course name " + courseStr + " does not exist.");
             return;
         }
 
         if (time == null) {
-            System.out.println("INVALID: period " + periodStr + " does not exist.");
+            print("INVALID: period " + periodStr + " does not exist.");
             return;
         }
 
         Section section = findSection(course, time);
         if (section == null) {
-            System.out.println(course + " " + time + " does not exist.");
+            print(course + " " + time + " does not exist.");
             return;
         }
 
         if (!section.isEmpty()) {
-            System.out.println(course + " " + time +
+            print(course + " " + time +
                     " cannot be removed [" + section.getNumStudents() + " student(s) enrolled]");
             return;
         }
 
         schedule.remove(section);
-        System.out.println(course + " " + time + " removed.");
+        print(course + " " + time + " removed.");
     }
 
 
@@ -656,45 +674,45 @@ public class Controller {
      *
      * @param st the command tokenizer
      */
-    private void offer(StringTokenizer st) {
+    private void handleOffer(StringTokenizer st) {
         if (st.countTokens() != 4) {
-            System.out.println("Invalid command.");
+            print("Invalid command.");
             return;
         }
         String courseStr = st.nextToken();
         Course course = parseCourse(courseStr);
-        if (course == null) { System.out.println("INVALID: course name " + courseStr + " does not exist."); return; }
+        if (course == null) { print("INVALID: course name " + courseStr + " does not exist."); return; }
 
         String periodStr = st.nextToken();
         Time time = parseTime(periodStr);
-        if (time == null) { System.out.println("INVALID: period " + periodStr + " does not exist."); return; }
+        if (time == null) { print("INVALID: period " + periodStr + " does not exist."); return; }
 
         if (findSection(course, time) != null) {
-            System.out.println("INVALID: " + course + " period " + time.getPeriod() + " already exists.");
+            print("INVALID: " + course + " period " + time.getPeriod() + " already exists.");
             return;
         }
 
         String instructorStr = st.nextToken();
         Instructor instructor = parseInstructor(instructorStr);
-        if (instructor == null) { System.out.println("INVALID: faculty " + instructorStr + " does not exist."); return;}
+        if (instructor == null) { print("INVALID: faculty " + instructorStr + " does not exist."); return;}
 
         if (hasInstructorTimeConflict(instructor, time)) {
-            System.out.println("INVALID: " + instructor + " time conflict."); return;
+            print("INVALID: " + instructor + " time conflict."); return;
         }
 
         String roomStr = st.nextToken().toUpperCase();
         Classroom classroom = parseClassroom(roomStr);
         if (classroom == null) {
-            System.out.println("INVALID: location " + roomStr.toLowerCase() + " does not exist."); return;
+            print("INVALID: location " + roomStr.toLowerCase() + " does not exist."); return;
         }
 
         if (!isClassroomAvailable(classroom, time)) {
-            System.out.println("INVALID: [" + classroom + "] not available."); return;
+            print("INVALID: [" + classroom + "] not available."); return;
         }
 
         Section section = new Section(course, time, instructor, classroom);
         schedule.add(section);
-        System.out.println("[" + course + " " + time + "] [" + instructor + "] [" + classroom + "] added to the schedule.");
+        print("[" + course + " " + time + "] [" + instructor + "] [" + classroom + "] added to the schedule.");
     }
 
     /**
@@ -706,7 +724,7 @@ public class Controller {
     private void handleLoad() {
         File file = new File("students.txt");
         if (!file.exists()) {
-            System.out.println("File students.txt not found.");
+            print("File students.txt not found.");
             return;
         }
 
@@ -730,12 +748,12 @@ public class Controller {
                         if (m.name().equals(majorStr)) major = m;
                     }
                     if (major == null) {
-                        System.out.println("INVALID: " + majorStr + " major does not exist.");
+                        print("INVALID: " + majorStr + " major does not exist.");
                         continue;
                     }
 
                     if (!dob.isValid()) {
-                        System.out.println("INVALID: " + dob + " is not a valid calendar date!");
+                        print("INVALID: " + dob + " is not a valid calendar date!");
                         continue;
                     }
 
@@ -763,27 +781,27 @@ public class Controller {
                             studentType = abroadI ? "International study abroad" : "International";
                             break;
                         default:
-                            System.out.println("INVALID: unknown resident status " + resStatus);
+                            print("INVALID: unknown resident status " + resStatus);
                             continue;
                     }
 
                     if (studentList.contains(student)) {
-                        System.out.println("[" + profile + "] student is already in the list.");
+                        print("[" + profile + "] student is already in the list.");
                         continue;
                     }
 
                     studentList.add(student);
-                    System.out.println("[" + profile + "][" + studentType + "] added to the list.");
+                    print("[" + profile + "][" + studentType + "] added to the list.");
 
                 } catch (Exception e) {
-                    System.out.println("INVALID line: " + line);
+                    print("INVALID line: " + line);
                 }
             }
         }
         catch (FileNotFoundException e) {
-            System.out.println("Error reading students.txt");
+            print("Error reading students.txt");
         }
-        System.out.println("student list loaded from the text file.");
+        print("student list loaded from the text file.");
 
     }
 
@@ -802,17 +820,17 @@ public class Controller {
             try {
                 amount = Integer.parseInt(st.nextToken());
             } catch (NumberFormatException e) {
-                System.out.println("INVALID: amount is not an integer.");
+                print("INVALID: amount is not an integer.");
                 return;
             }
 
             Profile profile = new Profile(fname, lname, dob);
             Student student = findStudent(profile);
 
-            if (student == null) { System.out.println("[" + profile + "] is not in the student list."); return; }
+            if (student == null) { print("[" + profile + "] is not in the student list."); return; }
 
             if (!(student instanceof Resident)) {
-                System.out.println("[" + profile + "] is a non-resident not eligible for the scholarship."); return;
+                print("[" + profile + "] is a non-resident not eligible for the scholarship."); return;
             }
 
             Resident resident = (Resident) student;
@@ -821,17 +839,17 @@ public class Controller {
                 if (s.contains(resident)) { enrolledCredits += s.getCourse().getCredits(); }
             }
             if (enrolledCredits < 12) {
-                System.out.println("[" + profile + "] enrolled less than 12 credits, not eligible for the scholarship.");
+                print("[" + profile + "] enrolled less than 12 credits, not eligible for the scholarship.");
                 return;
             }
             if (amount < 0 || amount > 10000) {
-                System.out.println("INVALID: scholarship amount cannot be 0 or negative or greater than $10,000.");
+                print("INVALID: scholarship amount cannot be 0 or negative or greater than $10,000.");
                 return;
             }
             resident.setScholarship(amount);
-            System.out.println("Scholarship $" + String.format("%,d", amount) + " updated for [" + profile + "]");
+            print("Scholarship $" + String.format("%,d", amount) + " updated for [" + profile + "]");
         }
-        catch (Exception e) { System.out.println("Invalid command."); }
+        catch (Exception e) { print("Invalid command."); }
     }
 
 
@@ -840,10 +858,10 @@ public class Controller {
      * Prints all student's tuition by profile
      */
     private void handleTuition() {
-        if (studentList.isEmpty()) { System.out.println("Schedule is empty!"); return; }
+        if (studentList.isEmpty()) { print("Schedule is empty!"); return; }
 
         Sort.sortByProfile(studentList);
-        System.out.println("* Tuition dues ordered by student. *");
+        print("* Tuition dues ordered by student. *");
 
         for (Student student : studentList) {
             Profile profile = student.getProfile();
@@ -851,7 +869,7 @@ public class Controller {
 
             String studentType = getStudentType(student);
 
-            System.out.println("[" + profile + "][" + studentType + "]");
+            print("[" + profile + "][" + studentType + "]");
 
             // Loop through schedule to find this student's enrollments
             for (Section section : schedule.getSections()) {
@@ -859,25 +877,25 @@ public class Controller {
                     int credits = section.getCourse().getCredits();
                     totalCredits += credits;
 
-                    System.out.println("\t\t" + section.getCourse()
+                    print("\t\t" + section.getCourse()
                             + "[" + section.getTime() + "] [credit: " + credits + "]");
                 }
             }
 
             if (student instanceof International intl && !intl.isStudyAbroad() && totalCredits < 12) {
-                System.out.println("\t\t**International student must enroll at least 12 credits."); continue;
+                print("\t\t**International student must enroll at least 12 credits."); continue;
             }
 
             if (totalCredits == 0) {
-                System.out.println("**not enrolled."); continue;
+                print("**not enrolled."); continue;
             }
 
             double tuition = student.tuition(totalCredits);
 
-            System.out.println("\t\t**Total credits enrolled: " + totalCredits +
+            print("\t\t**Total credits enrolled: " + totalCredits +
                     " [tuition due: $" + String.format("%,.2f", tuition) + "]");
         }
-        System.out.println("* end of list *");
+        print("* end of list *");
     }
 
 
@@ -898,20 +916,35 @@ public class Controller {
         }
 
         if (graduates.isEmpty()) {
-            System.out.println("Schedule is empty!");
+            print("Schedule is empty!");
             return;
         }
 
         Sort.sortByMajor(graduates);
 
-        System.out.println("* List of students eligible for graduation, ordered by major *");
+        print("* List of students eligible for graduation, ordered by major *");
 
         for (Student s : graduates) {
             String profileStr = "[" + s.getProfile() + "]";
             String majorStr = "[" + s.getMajor().getCode() + "," + s.getMajor().getSchool() + "]";
-            System.out.println(profileStr + majorStr);
+            print(profileStr + majorStr);
         }
 
-        System.out.println("* end of list *");
+        print("* end of list *");
+    }
+
+    @FXML
+    private void handlePrintByClassroom() {
+        print(schedule.printByClassroom());
+    }
+
+    @FXML
+    private void handlePrintByCourse() {
+        print(schedule.printByCourse());
+    }
+
+    @FXML
+    private void handlePrintStudentList() {
+        print(studentList.print());
     }
 }

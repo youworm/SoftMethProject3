@@ -20,15 +20,16 @@ public class StudentList extends List<Student> {
     /**
      * Prints students sequentially after sorting by profile
      */
-    public void print() {
+    public String print() {
+        StringBuilder sb = new StringBuilder();
         if (this.isEmpty()) {
-            System.out.println("Student list is empty!");
-            return;
+            sb.append("Student list is empty!");
+            return sb.toString();
         }
 
         // Sort by profile
         Sort.sortByProfile(this);
-        System.out.println("* Student list ordered by last, first name, DOB *");
+        sb.append("* Student list ordered by last, first name, DOB *");
 
         for (int i = 0; i < this.size(); i++) {
             Student s = this.get(i);
@@ -63,9 +64,10 @@ public class StudentList extends List<Student> {
             }
 
             // Combine and print
-            System.out.println(profileStr + " " + majorStr + " " + creditsStr + " " + standing + status);
+            sb.append(profileStr + " " + majorStr + " " + creditsStr + " " + standing + status);
         }
 
-        System.out.println("* end of list **");
+        sb.append("* end of list **");
+        return sb.toString();
     }
 }

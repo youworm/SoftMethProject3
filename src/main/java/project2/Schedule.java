@@ -46,34 +46,39 @@ public class Schedule extends List<Section> {
     /**
      * prints all the sections sorted by campus then building.
      */
-    public void printByClassroom() {
+    public String printByClassroom() {
+        StringBuilder sb = new StringBuilder();
         if (this.isEmpty()) {
-            System.out.println("Schedule is empty!");
-            return;
+            sb.append("Schedule is empty!");
+            return sb.toString();
         }
-        System.out.println("* List of sections ordered by campus, building *");
+        sb.append("* List of sections ordered by campus, building *");
         Sort.sortByClassroom(this);
         for (int i = 0; i < this.size(); i++) {
-            this.get(i).print();
+            sb.append(this.get(i).toString()).append("\n");;
         }
-        System.out.println("* end of list **");
+        sb.append("* end of list **");
+
+        return sb.toString();
     }
 
     /**
      * Prints all the schedule sorted by course name then period.
      */
-    public void printByCourse() {
+    public String printByCourse() {
+        StringBuilder sb = new StringBuilder();
 
         if (this.isEmpty()) {
-            System.out.println("Schedule is empty!");
-            return;
+            sb.append("Schedule is empty!");
+            return sb.toString();
         }
-        System.out.println("* List of sections ordered by course name, section time *");
+        sb.append("* List of sections ordered by course name, section time *");
         Sort.sortByCourse(this);
         for (int i = 0; i < this.size(); i++) {
-            this.get(i).print();
+            sb.append(this.get(i).toString()).append("\n");
         }
-        System.out.println("* end of list *");
+        sb.append("* end of list *");
+        return sb.toString();
     }
     /**
      * Returns a copy of the current sections in the schedule.
