@@ -1,4 +1,4 @@
-package com.example.project3.project2;
+package project2;
 
 /**
  * A section class containing list of enrolled students, including course, instructor, classroom and time.

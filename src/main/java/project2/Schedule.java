@@ -1,7 +1,7 @@
-package com.example.project3.project2;
+package project2;
 
-import com.example.project3.util.List;
-import com.example.project3.util.Sort;
+import util.List;
+import util.Sort;
 
 /**
  * Represents course schedule containing lists of sections

@@ -1,4 +1,4 @@
-package com.example.project3.project2;
+package project2;
 
 /**
  * Non-resident subclass of students containing profile, major and credits completed.

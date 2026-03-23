@@ -1,4 +1,4 @@
-package com.example.project3.util;
+package util;
 
 import project2.Classroom;
 import project2.Section;

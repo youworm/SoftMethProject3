@@ -1,4 +1,4 @@
-package com.example.project3.project2;
+package project2;
 
 /**
  * Represents the majors offered by the university.
