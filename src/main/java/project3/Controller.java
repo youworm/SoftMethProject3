@@ -29,6 +29,37 @@ public class Controller {
     private StudentList studentList;
     private Schedule schedule;
 
+    // --- Add Student Tab Fields ---
+    @FXML
+    private TextField addFnameField;      // first name
+    @FXML
+    private TextField addLnameField;      // last name
+    @FXML
+    private TextField addDobField;        // DOB
+    @FXML
+    private TextField addMajorField;      // Major
+    @FXML
+    private TextField addCreditsField;    // Credits
+    @FXML
+    private TextField addStateField;      // Only used for TriState
+    @FXML
+    private CheckBox addStudyAbroadCheck; // for International students
+
+    @FXML
+    private RadioButton residentRadio, nonResidentRadio, triStateRadio, internationalRadio;
+
+    private ToggleGroup addResidencyGroup = new ToggleGroup();
+
+    @FXML
+    public void initialize() {
+        residentRadio.setToggleGroup(addResidencyGroup);
+        nonResidentRadio.setToggleGroup(addResidencyGroup);
+        triStateRadio.setToggleGroup(addResidencyGroup);
+        internationalRadio.setToggleGroup(addResidencyGroup);
+    }
+
+    @FXML
+    private TextArea outputArea;
     /**
      * Constructs a Frontend instance and initializes the student list
      * and course schedule.
@@ -39,53 +70,11 @@ public class Controller {
     }
 
     /**
-     * Runs the main command-processing loop for the registration system.
+     * Writes message from handle methods to output area
+     * @param message to be written in output area
      */
-    public void run() {
-        System.out.println("Registration System is running.");
-        Scanner scanner = new Scanner(System.in);
-
-        while (scanner.hasNextLine()) {
-            String line = scanner.nextLine().trim();
-            if (line.isEmpty()) {
-                continue;
-            }
-
-            StringTokenizer st = new StringTokenizer(line);
-            String command = st.nextToken();
-
-            if (command.equals("Q")) {
-                System.out.println("Registration System is terminated.");
-                scanner.close();
-                return;
-            }
-            processCommand(command, st);
-
-        }
-    }
-
-    /**
-     * Accepts a string and processes the corresponding command
-     * @param command to be processed
-     * @param st string tokenizer
-     */
-    private void processCommand(String command, StringTokenizer st) {
-        switch (command) {
-            case "AR", "AN", "AT", "AI" -> handleAdd(command, st);
-            case "R" -> handleRemove(st);
-            case "E" -> handleEnroll(st);
-            case "D" -> handleDrop(st);
-            case "C" -> handleClose(st);
-            case "O" -> offer(st);
-            case "PL" -> schedule.printByClassroom();
-            case "PC" -> schedule.printByCourse();
-            case "PS" -> studentList.print();
-            case "S" -> handleScholarship(st);
-            case "L" -> handleLoad();
-            case "PT" -> handleTuition();
-            case "PG" -> handleGraduates();
-            default -> System.out.println(command + " is an invalid command!");
-        }
+    private void print(String message) {
+        outputArea.appendText(message + "\n");
     }
     /**
      * Gets student type as a string
@@ -377,82 +366,92 @@ public class Controller {
      * Handles adding students with different resident statuses.
      * Supports AR (Resident), AN (NonResident), AT (TriState), AI (International)
      */
-    private void handleAdd(String command, StringTokenizer st) {
+    @FXML
+    private void handleAdd() {
         try {
-            String fname = st.nextToken();
-            String lname = st.nextToken();
-            Date dob = parseDate(st.nextToken());
-            String majorStr = st.nextToken().toUpperCase();
-            String creditToken = st.nextToken(); // ← capture token first
+            String fname = addFnameField.getText();
+            String lname = addLnameField.getText();
+            Date dob = parseDate(addDobField.getText());
+            String majorStr = addMajorField.getText().toUpperCase();
             int credits;
             try {
-                credits = Integer.parseInt(creditToken);
+                credits = Integer.parseInt(addCreditsField.getText());
             } catch (NumberFormatException e) {
-                System.out.println("INVALID: " + creditToken + " is not an integer!");
+                print("INVALID: " + addCreditsField.getText() + " is not an integer!");
                 return;
             }
+
             Major major = null;
-            for (Major m : Major.values()) { if (m.name().equals(majorStr)) major = m; }
+            for (Major m : Major.values()) {
+                if (m.name().equals(majorStr)) major = m;
+            }
 
-            if (major == null) { System.out.println("INVALID: " + majorStr + " major does not exist. "); return; }
+            if (major == null) {
+                print("INVALID: " + majorStr + " major does not exist.");
+                return;
+            }
 
-            if (!dob.isValid()) { System.out.println("INVALID: " + dob + " is not a valid calendar date!"); return; }
+            if (!dob.isValid()) {
+                print("INVALID: " + dob + " is not a valid calendar date!");
+                return;
+            }
 
             Calendar today = Calendar.getInstance();
             Calendar birth = Calendar.getInstance();
             birth.set(dob.getYear(), dob.getMonth() - 1, dob.getDay());
 
             if (!birth.before(today)) {
-                System.out.println("INVALID: " + dob + " cannot be today or a future day.");
+                print("INVALID: " + dob + " cannot be today or a future day.");
                 return;
             }
 
             int age = today.get(Calendar.YEAR) - dob.getYear();
             if (today.get(Calendar.DAY_OF_YEAR) < birth.get(Calendar.DAY_OF_YEAR)) age--;
             if (age < 16) {
-                System.out.println("INVALID: " + dob + " younger than 16 years old.");
+                print("INVALID: " + dob + " younger than 16 years old.");
                 return;
             }
 
             if (credits < 0) {
-                System.out.println("INVALID: " + credits + " credit is negative!");
+                print("INVALID: " + credits + " credit is negative!");
                 return;
             }
 
             Profile profile = new Profile(fname, lname, dob);
             Student student = null;
-
             String studentType = "";
-            switch (command) {
-                case "AR": student = new Resident(profile, major, credits); studentType = "Resident"; break;
-                case "AN": student = new NonResident(profile, major, credits); studentType = "Non-Resident"; break;
-                case "AT":
-                    String state = st.nextToken().toUpperCase();
-                    boolean isValidState = isValidState(state);
-                    if (!isValidState) {
-                        System.out.println(state + ": Invalid state code.");
-                        return;
-                    }
-                    student = new TriState(profile, major, credits, state);
-                    studentType = "Tristate: " + ((TriState) student).getState();
-                    break;
-                case "AI":
-                    boolean studyAbroad = Boolean.parseBoolean(st.nextToken());
-                    student = new International(profile, major, credits, studyAbroad);
-                    International intl = (International) student;
-                    studentType = intl.isStudyAbroad() ? "International study abroad" : "International";
-                    break;
+
+            if (addResidencyGroup.getSelectedToggle() == residentRadio) {
+                student = new Resident(profile, major, credits);
+                studentType = "Resident";
+            } else if (addResidencyGroup.getSelectedToggle() == nonResidentRadio) {
+                student = new NonResident(profile, major, credits);
+                studentType = "Non-Resident";
+            } else if (addResidencyGroup.getSelectedToggle() == triStateRadio) {
+                String state = addStateField.getText().toUpperCase();
+                if (!isValidState(state)) {
+                    print(state + ": Invalid state code.");
+                    return;
+                }
+                student = new TriState(profile, major, credits, state);
+                studentType = "Tristate: " + ((TriState) student).getState();
+            } else if (addResidencyGroup.getSelectedToggle() == internationalRadio) {
+                boolean studyAbroad = addStudyAbroadCheck.isSelected();
+                student = new International(profile, major, credits, studyAbroad);
+                studentType = studyAbroad ? "International study abroad" : "International";
             }
 
             if (studentList.contains(student)) {
-                System.out.println("[" + profile + "] student is already in the list.");
+                print("[" + profile + "] student is already in the list.");
                 return;
             }
 
             studentList.add(student);
-            System.out.println("[" + profile + "][" + studentType + "] added to the list.");
+            print("[" + profile + "][" + studentType + "] added to the list.");
 
-        } catch (Exception e) { System.out.println("Missing data tokens.");}
+        } catch (Exception e) {
+            print("Missing data tokens.");
+        }
     }
 
     /**

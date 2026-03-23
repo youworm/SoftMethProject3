@@ -32,136 +32,23 @@
 
         <Label text="Residency:" GridPane.rowIndex="5" GridPane.columnIndex="0"/>
         <HBox spacing="10" GridPane.rowIndex="5" GridPane.columnIndex="1">
-          <ToggleGroup fx:id="residencyGroup"/>
-          <RadioButton text="Resident" toggleGroup="$residencyGroup"/>
-          <RadioButton text="NonResident" toggleGroup="$residencyGroup"/>
-          <RadioButton text="TriState" toggleGroup="$residencyGroup"/>
-          <RadioButton text="International" toggleGroup="$residencyGroup"/>
+          <RadioButton fx:id="residentRadio" text="Resident"/>
+          <RadioButton fx:id="nonResidentRadio" text="NonResident"/>
+          <RadioButton fx:id="triStateRadio" text="TriState"/>
+          <RadioButton fx:id="internationalRadio" text="International"/>
         </HBox>
 
-        <Button text="Add Student" onAction="#handleAddStudent"
-                GridPane.rowIndex="6" GridPane.columnIndex="1"/>
+        <!-- State field (for TriState students) -->
+        <Label text="State:" GridPane.rowIndex="6" GridPane.columnIndex="0"/>
+        <TextField fx:id="addStateField" GridPane.rowIndex="6" GridPane.columnIndex="1"/>
+
+        <!-- Study Abroad checkbox (for International students) -->
+        <CheckBox fx:id="addStudyAbroadCheck" text="Study Abroad" GridPane.rowIndex="7" GridPane.columnIndex="1"/>
+
+        <Button text="Add Student" onAction="#handleAdd"
+                GridPane.rowIndex="8" GridPane.columnIndex="1"/>
 
       </GridPane>
-    </Tab>
-
-    <!-- REMOVE STUDENT TAB -->
-    <Tab text="Remove Student">
-      <GridPane hgap="10" vgap="10">
-        <padding>
-          <Insets top="10" right="10" bottom="10" left="10"/>
-        </padding>
-
-        <TextField fx:id="removeFnameField" promptText="First Name"/>
-        <TextField fx:id="removeLnameField" promptText="Last Name"/>
-        <TextField fx:id="removeDobField" promptText="DOB"/>
-        <Button text="Remove" onAction="#handleRemoveStudent"/>
-      </GridPane>
-    </Tab>
-
-    <!-- ENROLL TAB -->
-    <Tab text="Enroll">
-      <GridPane hgap="10" vgap="10">
-        <padding>
-          <Insets top="10" right="10" bottom="10" left="10"/>
-        </padding>
-
-        <TextField fx:id="enrollFnameField" promptText="First Name"/>
-        <TextField fx:id="enrollLnameField" promptText="Last Name"/>
-        <TextField fx:id="enrollDobField" promptText="DOB"/>
-        <TextField fx:id="enrollCourseField" promptText="Course"/>
-        <TextField fx:id="enrollPeriodField" promptText="Period"/>
-        <Button text="Enroll" onAction="#handleEnroll"/>
-      </GridPane>
-    </Tab>
-
-    <!-- DROP TAB -->
-    <Tab text="Drop">
-      <GridPane hgap="10" vgap="10">
-        <padding>
-          <Insets top="10" right="10" bottom="10" left="10"/>
-        </padding>
-
-        <TextField fx:id="dropFnameField" promptText="First Name"/>
-        <TextField fx:id="dropLnameField" promptText="Last Name"/>
-        <TextField fx:id="dropDobField" promptText="DOB"/>
-        <TextField fx:id="dropCourseField" promptText="Course"/>
-        <TextField fx:id="dropPeriodField" promptText="Period"/>
-        <Button text="Drop" onAction="#handleDrop"/>
-      </GridPane>
-    </Tab>
-
-    <!-- CLOSE SECTION TAB -->
-    <Tab text="Close Section">
-      <GridPane hgap="10" vgap="10">
-        <padding>
-          <Insets top="10" right="10" bottom="10" left="10"/>
-        </padding>
-
-        <TextField fx:id="closeCourseField" promptText="Course"/>
-        <TextField fx:id="closePeriodField" promptText="Period"/>
-        <Button text="Close Section" onAction="#handleCloseSection"/>
-      </GridPane>
-    </Tab>
-
-    <!-- OFFER SECTION TAB -->
-    <Tab text="Offer Section">
-      <GridPane hgap="10" vgap="10">
-        <padding>
-          <Insets top="10" right="10" bottom="10" left="10"/>
-        </padding>
-
-        <TextField fx:id="offerCourseField" promptText="Course"/>
-        <TextField fx:id="offerPeriodField" promptText="Period"/>
-        <TextField fx:id="offerInstructorField" promptText="Instructor"/>
-        <TextField fx:id="offerRoomField" promptText="Classroom"/>
-        <Button text="Offer Section" onAction="#handleOfferSection"/>
-      </GridPane>
-    </Tab>
-
-    <!-- SCHOLARSHIP TAB -->
-    <Tab text="Scholarship">
-      <GridPane hgap="10" vgap="10">
-        <padding>
-          <Insets top="10" right="10" bottom="10" left="10"/>
-        </padding>
-
-        <TextField fx:id="scholarFnameField" promptText="First Name"/>
-        <TextField fx:id="scholarLnameField" promptText="Last Name"/>
-        <TextField fx:id="scholarDobField" promptText="DOB"/>
-        <TextField fx:id="scholarAmountField" promptText="Amount"/>
-        <Button text="Set Scholarship" onAction="#handleScholarship"/>
-      </GridPane>
-    </Tab>
-
-    <!-- LOAD TAB -->
-    <Tab text="Load Students">
-      <VBox spacing="10">
-        <padding>
-          <Insets top="10" right="10" bottom="10" left="10"/>
-        </padding>
-        <Button text="Load Students from File" onAction="#handleLoad"/>
-      </VBox>
-    </Tab>
-
-    <!-- TUITION TAB -->
-    <Tab text="Tuition">
-      <VBox spacing="10">
-        <padding>
-          <Insets top="10" right="10" bottom="10" left="10"/>
-        </padding>
-        <Button text="Print Tuition" onAction="#handleTuition"/>
-      </VBox>
-    </Tab>
-
-    <!-- GRADUATES TAB -->
-    <Tab text="Graduates">
-      <VBox spacing="10">
-        <padding>
-          <Insets top="10" right="10" bottom="10" left="10"/>
-        </padding>
-        <Button text="Print Graduates" onAction="#handleGraduates"/>
-      </VBox>
     </Tab>
 
     <!-- OUTPUT TAB -->
@@ -170,15 +57,20 @@
         <padding>
           <Insets top="10" right="10" bottom="10" left="10"/>
         </padding>
-        <TextArea fx:id="outputArea" prefHeight="400"/>
 
+        <!-- Text area for displaying output -->
+        <TextArea fx:id="outputArea" prefHeight="400" wrapText="true"/>
+
+        <!-- Buttons to trigger commands
         <HBox spacing="10">
           <Button text="Print Students" onAction="#handlePrintStudents"/>
           <Button text="Print Schedule" onAction="#handlePrintSchedule"/>
           <Button text="Clear" onAction="#handleClear"/>
         </HBox>
+        -->
       </VBox>
     </Tab>
+
 
   </tabs>
 
