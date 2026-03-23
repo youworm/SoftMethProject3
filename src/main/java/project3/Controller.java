@@ -37,17 +37,29 @@ public class Controller {
     @FXML
     private TextField addDobField;        // DOB
     @FXML
-    private TextField addMajorField;      // Major
-    @FXML
-    private TextField addCreditsField;    // Credits
-    @FXML
-    private TextField addStateField;      // Only used for TriState
-    @FXML
-    private CheckBox addStudyAbroadCheck; // for International student
-    @FXML
-    private RadioButton residentRadio, nonResidentRadio, triStateRadio, internationalRadio;
-    @FXML
-    private ToggleGroup addResidencyGroup = new ToggleGroup();
+    private TextField addCreditsField;
+
+    @FXML private ToggleGroup majorGroup;
+    @FXML private RadioButton csMajor;
+    @FXML private RadioButton eceMajor;
+    @FXML private RadioButton itiMajor;
+    @FXML private RadioButton mathMajor;
+    @FXML private RadioButton baitMajor;
+
+    @FXML private ToggleGroup residencyGroup;
+    @FXML private ToggleGroup nonResidentGroup;
+    @FXML private ToggleGroup stateGroup;
+
+    @FXML private RadioButton residentRadio;
+    @FXML private RadioButton nonResidentRadio;
+
+    @FXML private RadioButton triStateRadio;
+    @FXML private RadioButton internationalRadio;
+
+    @FXML private RadioButton nyRadio;
+    @FXML private RadioButton ctRadio;
+
+    @FXML private CheckBox addStudyAbroadCheck;
 
     // Remove student fields
     @FXML
@@ -69,13 +81,99 @@ public class Controller {
     @FXML
     private TextField enrollPeriodField;
 
-    public void initialize() {
-        residentRadio.setToggleGroup(addResidencyGroup);
-        nonResidentRadio.setToggleGroup(addResidencyGroup);
-        triStateRadio.setToggleGroup(addResidencyGroup);
-        internationalRadio.setToggleGroup(addResidencyGroup);
+    @FXML
+    private void initialize() {
+        // Default disable everything
+        triStateRadio.setDisable(true);
+        internationalRadio.setDisable(true);
+        nyRadio.setDisable(true);
+        ctRadio.setDisable(true);
+        addStudyAbroadCheck.setDisable(true);
+
+        // Resident vs Non-Resident
+        residentRadio.selectedProperty().addListener((obs, wasSelected, isNowSelected) -> {
+            if (isNowSelected) {
+                triStateRadio.setDisable(true);
+                internationalRadio.setDisable(true);
+                triStateRadio.setSelected(false);
+                internationalRadio.setSelected(false);
+
+                nyRadio.setDisable(true);
+                ctRadio.setDisable(true);
+                nyRadio.setSelected(false);
+                ctRadio.setSelected(false);
+
+                addStudyAbroadCheck.setDisable(true);
+                addStudyAbroadCheck.setSelected(false);
+            }
+        });
+
+        nonResidentRadio.selectedProperty().addListener((obs, wasSelected, isNowSelected) -> {
+            triStateRadio.setDisable(!isNowSelected);
+            internationalRadio.setDisable(!isNowSelected);
+
+            if (!isNowSelected) {
+                triStateRadio.setSelected(false);
+                internationalRadio.setSelected(false);
+
+                nyRadio.setDisable(true);
+                ctRadio.setDisable(true);
+                nyRadio.setSelected(false);
+                ctRadio.setSelected(false);
+
+                addStudyAbroadCheck.setDisable(true);
+                addStudyAbroadCheck.setSelected(false);
+            }
+        });
+
+        // TriState selected → enable states
+        triStateRadio.selectedProperty().addListener((obs, wasSelected, isNowSelected) -> {
+            nyRadio.setDisable(!isNowSelected);
+            ctRadio.setDisable(!isNowSelected);
+            if (!isNowSelected) {
+                nyRadio.setSelected(false);
+                ctRadio.setSelected(false);
+            }
+            // TriState and International are mutually exclusive
+            if (isNowSelected) internationalRadio.setSelected(false);
+        });
+
+        // International selected → enable study abroad
+        internationalRadio.selectedProperty().addListener((obs, wasSelected, isNowSelected) -> {
+            addStudyAbroadCheck.setDisable(!isNowSelected);
+            if (!isNowSelected) addStudyAbroadCheck.setSelected(false);
+
+            // International and TriState are mutually exclusive
+            if (isNowSelected) triStateRadio.setSelected(false);
+
+            // NY/CT should be disabled if International is selected
+            nyRadio.setDisable(isNowSelected || !nonResidentRadio.isSelected());
+            ctRadio.setDisable(isNowSelected || !nonResidentRadio.isSelected());
+        });
     }
 
+    // Offer fields
+    @FXML
+    private TextField offerCourseCodeField;
+    @FXML
+    private TextField offerPeriodField;
+    @FXML
+    private TextField offerInstructorField;
+    @FXML
+    private TextField offerRoomField;
+
+    // Course Period Profile
+    // Drop fields
+    @FXML
+    private TextField dropFnameField;
+    @FXML
+    private TextField dropLnameField;
+    @FXML
+    private TextField dropDobField;
+    @FXML
+    private TextField dropCourseCodeField;
+    @FXML
+    private TextField dropPeriodField;
     @FXML
     private TextArea outputArea;
     /**
@@ -390,7 +488,14 @@ public class Controller {
             String fname = addFnameField.getText();
             String lname = addLnameField.getText();
             Date dob = parseDate(addDobField.getText());
-            String majorStr = addMajorField.getText().toUpperCase();
+            RadioButton selectedMajor = (RadioButton) majorGroup.getSelectedToggle();
+            if (selectedMajor == null) {
+                print("INVALID: major not selected.");
+                return;
+            }
+
+
+            String majorStr = selectedMajor.getText();
             int credits;
             try {
                 credits = Integer.parseInt(addCreditsField.getText());
@@ -439,24 +544,33 @@ public class Controller {
             Student student = null;
             String studentType = "";
 
-            if (addResidencyGroup.getSelectedToggle() == residentRadio) {
+            if (residencyGroup.getSelectedToggle() == null) {
+                print("INVALID: Residency must be selected.");
+                return;
+            }
+
+            if (residentRadio.isSelected()) {
                 student = new Resident(profile, major, credits);
                 studentType = "Resident";
-            } else if (addResidencyGroup.getSelectedToggle() == nonResidentRadio) {
-                student = new NonResident(profile, major, credits);
-                studentType = "Non-Resident";
-            } else if (addResidencyGroup.getSelectedToggle() == triStateRadio) {
-                String state = addStateField.getText().toUpperCase();
-                if (!isValidState(state)) {
-                    print(state + ": Invalid state code.");
-                    return;
+
+            } else if (nonResidentRadio.isSelected()) {
+
+                if (triStateRadio.isSelected()) {
+                    RadioButton selectedState = (RadioButton) stateGroup.getSelectedToggle();
+                    if (selectedState == null) {
+                        print("State not selected.");
+                        return;
+                    }
+
+                    String state = selectedState.getText();
+                    student = new TriState(profile, major, credits, state);
+                    studentType = "Tristate: " + state;
+
+                } else if (internationalRadio.isSelected()) {
+                    boolean studyAbroad = addStudyAbroadCheck.isSelected();
+                    student = new International(profile, major, credits, studyAbroad);
+                    studentType = studyAbroad ? "International study abroad" : "International";
                 }
-                student = new TriState(profile, major, credits, state);
-                studentType = "Tristate: " + ((TriState) student).getState();
-            } else if (addResidencyGroup.getSelectedToggle() == internationalRadio) {
-                boolean studyAbroad = addStudyAbroadCheck.isSelected();
-                student = new International(profile, major, credits, studyAbroad);
-                studentType = studyAbroad ? "International study abroad" : "International";
             }
 
             if (studentList.contains(student)) {
@@ -495,9 +609,9 @@ public class Controller {
     @FXML
     private void handleRemove() {
         Profile profile = new Profile(
-                removeFnameField.getText(),
-                removeLnameField.getText(),
-                parseDate(removeDobField.getText())
+                addFnameField.getText(),
+                addLnameField.getText(),
+                parseDate(addDobField.getText())
         );
 
         Student student = findStudent(profile);
@@ -600,15 +714,15 @@ public class Controller {
     /**
      * Handles the drop command.
      *
-     * @param st the command tokenizer
      */
-    private void handleDrop(StringTokenizer st) {
-        Profile profile = new Profile(st.nextToken(), st.nextToken(), parseDate(st.nextToken()));
+    @FXML
+    private void handleDrop() {
+        Profile profile = new Profile(enrollFnameField.getText(), dropLnameField.getText(), parseDate(dropDobField.getText()));
 
-        String courseStr = st.nextToken();
+        String courseStr = enrollCourseCodeField.getText();
         Course course = parseCourse(courseStr);
 
-        String periodStr = st.nextToken();
+        String periodStr = enrollPeriodField.getText();
         Time time = parseTime(periodStr);
         Student student = findStudent(profile);
 
@@ -633,13 +747,12 @@ public class Controller {
 
     /**
      * Handles the close-section command.
-     *
-     * @param st the command tokenizer
      */
-    private void handleClose(StringTokenizer st) {
-        String courseStr = st.nextToken();
+    @FXML
+    private void handleClose() {
+        String courseStr = offerCourseCodeField.getText();
         Course course = parseCourse(courseStr);
-        String periodStr = st.nextToken();
+        String periodStr = offerPeriodField.getText();
         Time time = parseTime(periodStr);
 
         if (course == null) {
@@ -671,19 +784,22 @@ public class Controller {
 
     /**
      * Handles the offer-section command.
-     *
-     * @param st the command tokenizer
      */
-    private void handleOffer(StringTokenizer st) {
-        if (st.countTokens() != 4) {
+    @FXML
+    private void handleOffer() {
+        if (offerCourseCodeField.getText().isEmpty() ||
+                offerPeriodField.getText().isEmpty() ||
+                offerInstructorField.getText().isEmpty() ||
+                offerRoomField.getText().isEmpty()) {
+
             print("Invalid command.");
             return;
         }
-        String courseStr = st.nextToken();
+        String courseStr = offerCourseCodeField.getText();
         Course course = parseCourse(courseStr);
         if (course == null) { print("INVALID: course name " + courseStr + " does not exist."); return; }
 
-        String periodStr = st.nextToken();
+        String periodStr = offerPeriodField.getText();
         Time time = parseTime(periodStr);
         if (time == null) { print("INVALID: period " + periodStr + " does not exist."); return; }
 
@@ -692,7 +808,7 @@ public class Controller {
             return;
         }
 
-        String instructorStr = st.nextToken();
+        String instructorStr = offerInstructorField.getText();
         Instructor instructor = parseInstructor(instructorStr);
         if (instructor == null) { print("INVALID: faculty " + instructorStr + " does not exist."); return;}
 
@@ -700,7 +816,7 @@ public class Controller {
             print("INVALID: " + instructor + " time conflict."); return;
         }
 
-        String roomStr = st.nextToken().toUpperCase();
+        String roomStr = offerRoomField.getText().toUpperCase();
         Classroom classroom = parseClassroom(roomStr);
         if (classroom == null) {
             print("INVALID: location " + roomStr.toLowerCase() + " does not exist."); return;

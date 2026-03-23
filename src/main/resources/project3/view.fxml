@@ -4,12 +4,14 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.geometry.Insets?>
 
-<TabPane xmlns:fx="http://javafx.com/fxml" fx:controller="project3.Controller">
+<VBox xmlns:fx="http://javafx.com/fxml" fx:controller="project3.Controller" spacing="10">
+
+  <TabPane fx:id="tabPane" VBox.vgrow="ALWAYS">
 
   <tabs>
 
     <!-- ADD STUDENT TAB -->
-    <Tab text="Add Student">
+    <Tab text="Add/Remove Student">
       <GridPane hgap="10" vgap="10">
         <padding>
           <Insets top="10" right="10" bottom="10" left="10"/>
@@ -25,52 +27,64 @@
         <TextField fx:id="addDobField" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
 
         <Label text="Major:" GridPane.rowIndex="3" GridPane.columnIndex="0"/>
-        <TextField fx:id="addMajorField" GridPane.rowIndex="3" GridPane.columnIndex="1"/>
 
+        <VBox spacing="5" GridPane.rowIndex="3" GridPane.columnIndex="1">
+          <RadioButton fx:id="csMajor" text="CS">
+            <toggleGroup>
+                <ToggleGroup fx:id = "majorGroup"/>
+            </toggleGroup>
+          </RadioButton>
+          <RadioButton fx:id="eceMajor" text="ECE" toggleGroup="$majorGroup"/>
+          <RadioButton fx:id="itiMajor" text="ITI" toggleGroup="$majorGroup"/>
+          <RadioButton fx:id="mathMajor" text="MATH" toggleGroup="$majorGroup"/>
+          <RadioButton fx:id="baitMajor" text="BAIT" toggleGroup="$majorGroup"/>
+
+          <!-- add all your majors -->
+        </VBox>
         <Label text="Credits:" GridPane.rowIndex="4" GridPane.columnIndex="0"/>
         <TextField fx:id="addCreditsField" GridPane.rowIndex="4" GridPane.columnIndex="1"/>
 
         <Label text="Residency:" GridPane.rowIndex="5" GridPane.columnIndex="0"/>
-        <HBox spacing="10" GridPane.rowIndex="5" GridPane.columnIndex="1">
-          <RadioButton fx:id="residentRadio" text="Resident"/>
-          <RadioButton fx:id="nonResidentRadio" text="NonResident"/>
-          <RadioButton fx:id="triStateRadio" text="TriState"/>
-          <RadioButton fx:id="internationalRadio" text="International"/>
-        </HBox>
 
-        <!-- State field (for TriState students) -->
-        <Label text="State:" GridPane.rowIndex="6" GridPane.columnIndex="0"/>
-        <TextField fx:id="addStateField" GridPane.rowIndex="6" GridPane.columnIndex="1"/>
+        <VBox spacing="8" GridPane.rowIndex="5" GridPane.columnIndex="1">
 
-        <!-- Study Abroad checkbox (for International students) -->
-        <CheckBox fx:id="addStudyAbroadCheck" text="Study Abroad" GridPane.rowIndex="7" GridPane.columnIndex="1"/>
+          <!-- Main Residency -->
+          <HBox spacing="10">
+            <RadioButton fx:id="residentRadio" text="Resident">
+              <toggleGroup>
+                <ToggleGroup fx:id="residencyGroup"/>
+              </toggleGroup>
+            </RadioButton>
+            <RadioButton fx:id="nonResidentRadio" text="Non-Resident" toggleGroup="$residencyGroup"/>
+          </HBox>
 
+          <!-- Sub options -->
+          <HBox spacing="10">
+            <RadioButton fx:id="triStateRadio" text="TriState" toggleGroup="$nonResidentGroup"/>
+            <RadioButton fx:id="internationalRadio" text="International" toggleGroup="$nonResidentGroup"/>
+          </HBox>
+
+          <!-- State options -->
+          <HBox spacing="10">
+            <RadioButton fx:id="nyRadio" text="NY" toggleGroup="$stateGroup"/>
+            <RadioButton fx:id="ctRadio" text="CT" toggleGroup="$stateGroup"/>
+          </HBox>
+
+          <!-- Study Abroad -->
+          <CheckBox fx:id="addStudyAbroadCheck" text="Study Abroad"/>
+
+        </VBox>
         <Button text="Add Student" onAction="#handleAdd"
                 GridPane.rowIndex="8" GridPane.columnIndex="1"/>
-
-      </GridPane>
-    </Tab>
-
-    <Tab text="Remove Student">
-        <GridPane hgap="10" vgap="10">
-        <padding>
-          <Insets top="10" right="10" bottom="10" left="10"/>
-        </padding>
-
-        <Label text="First Name:" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
-        <TextField fx:id="removeFnameField" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
-
-        <Label text="Last Name:" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
-        <TextField fx:id="removeLnameField" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
-
-        <Label text="DOB (MM/DD/YYYY):" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
-        <TextField fx:id="removeDobField" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
         <Button text="Remove Student" onAction="#handleRemove"
-                GridPane.rowIndex="3" GridPane.columnIndex="1"/>
+                GridPane.rowIndex="8" GridPane.columnIndex="2"/>
+
       </GridPane>
     </Tab>
 
-    <Tab text="Enroll Student">
+
+
+    <Tab text="Enroll/Drop Student">
       <GridPane hgap="10" vgap="10">
         <padding>
           <Insets top="10" right="10" bottom="10" left="10"/>
@@ -101,33 +115,55 @@
                 onAction="#handleEnroll"
                 GridPane.rowIndex="5"
                 GridPane.columnIndex="1"/>
+        <!-- Button -->
+        <Button text="Drop"
+                onAction="#handleDrop"
+                GridPane.rowIndex="5"
+                GridPane.columnIndex="2"/>
       </GridPane>
     </Tab>
 
-    <!-- OUTPUT TAB -->
-    <Tab text="Output">
-      <VBox spacing="10">
+    <Tab text="Open/Close Section">
+      <GridPane hgap="10" vgap="10">
         <padding>
           <Insets top="10" right="10" bottom="10" left="10"/>
         </padding>
 
-        <!-- Text area for displaying output -->
-        <TextArea fx:id="outputArea" prefHeight="400" wrapText="true"/>
+        <!-- Course Code -->
+        <Label text="Course Code:" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+        <TextField fx:id="offerCourseCodeField" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
 
-        <!-- Buttons to trigger commands -->
-        <HBox spacing="10">
-          <Button text="Print by Classroom" onAction="#handlePrintByClassroom"/>
-          <Button text="Print by Course" onAction="#handlePrintByCourse"/>
-          <Button text="Print Student List" onAction="#handlePrintStudentList"/>
+        <!-- Period -->
+        <Label text="Period:" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+        <TextField fx:id="offerPeriodField" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
 
-        </HBox>
+        <!-- Instructor -->
+        <Label text="Instructor:" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+        <TextField fx:id="offerInstructorField" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
 
-      </VBox>
+        <!-- Classroom -->
+        <Label text="Classroom:" GridPane.rowIndex="3" GridPane.columnIndex="0"/>
+        <TextField fx:id="offerRoomField" GridPane.rowIndex="3" GridPane.columnIndex="1"/>
+
+        <!-- Button -->
+        <Button text="Open Section"
+                onAction="#handleOffer"
+                GridPane.rowIndex="4"
+                GridPane.columnIndex="1"/>
+        <Button text="Close Section"
+                onAction="#handleClose"
+                GridPane.rowIndex="4"
+                GridPane.columnIndex="1"/>
+      </GridPane>
     </Tab>
 
-
-
-
   </tabs>
-
-</TabPane>
+  </TabPane>
+  <VBox spacing="5" VBox.vgrow="NEVER">
+    <padding>
+      <Insets top="10" right="10" bottom="10" left="10"/>
+    </padding>
+    <Label text="Output:"/>
+    <TextArea fx:id="outputArea" prefHeight="200" wrapText="true" editable="false"/>
+  </VBox>
+</VBox>
