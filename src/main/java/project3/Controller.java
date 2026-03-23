@@ -845,7 +845,7 @@ public class Controller {
      */
     @FXML
     private void handleLoad() {
-        File file = new File("students.txt");
+        File file = new File("src/students.txt");
         if (!file.exists()) {
             print("File students.txt not found.");
             return;
