@@ -29,7 +29,7 @@ public class StudentList extends List<Student> {
 
         // Sort by profile
         Sort.sortByProfile(this);
-        sb.append("* Student list ordered by last, first name, DOB *");
+        sb.append("* Student list ordered by last, first name, DOB *\n");
 
         for (int i = 0; i < this.size(); i++) {
             Student s = this.get(i);
@@ -64,10 +64,10 @@ public class StudentList extends List<Student> {
             }
 
             // Combine and print
-            sb.append(profileStr + " " + majorStr + " " + creditsStr + " " + standing + status);
+            sb.append(profileStr + " " + majorStr + " " + creditsStr + " " + standing + status+"\n");
         }
 
-        sb.append("* end of list **");
+        sb.append("* end of list **\n");
         return sb.toString();
     }
 }

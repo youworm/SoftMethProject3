@@ -81,8 +81,42 @@ public class Controller {
     @FXML
     private TextField enrollPeriodField;
 
+
+
+    // Offer fields
+    @FXML
+    private ComboBox<Course> offerCourseCodeField;
+    @FXML
+    private ComboBox<Time> offerPeriodField;
+    @FXML
+    private ComboBox<Instructor> offerInstructorField;
+    @FXML
+    private ComboBox<Classroom> offerRoomField;
+
+    // Course Period Profile
+    // Drop fields
+    @FXML
+    private TextField dropFnameField;
+    @FXML
+    private TextField dropLnameField;
+    @FXML
+    private TextField dropDobField;
+    @FXML
+    private TextField dropCourseCodeField;
+    @FXML
+    private TextField dropPeriodField;
+    @FXML
+    private TextArea outputArea;
+
+    /**
+     * Initalizes the state of radio buttons and drop-downs.
+     */
     @FXML
     private void initialize() {
+        offerCourseCodeField.getItems().setAll(Course.values());
+        offerPeriodField.getItems().setAll(Time.values());
+        offerInstructorField.getItems().setAll(Instructor.values());
+        offerRoomField.getItems().setAll(Classroom.values());
         // Default disable everything
         triStateRadio.setDisable(true);
         internationalRadio.setDisable(true);
@@ -150,32 +184,9 @@ public class Controller {
             nyRadio.setDisable(isNowSelected || !nonResidentRadio.isSelected());
             ctRadio.setDisable(isNowSelected || !nonResidentRadio.isSelected());
         });
+
     }
 
-    // Offer fields
-    @FXML
-    private TextField offerCourseCodeField;
-    @FXML
-    private TextField offerPeriodField;
-    @FXML
-    private TextField offerInstructorField;
-    @FXML
-    private TextField offerRoomField;
-
-    // Course Period Profile
-    // Drop fields
-    @FXML
-    private TextField dropFnameField;
-    @FXML
-    private TextField dropLnameField;
-    @FXML
-    private TextField dropDobField;
-    @FXML
-    private TextField dropCourseCodeField;
-    @FXML
-    private TextField dropPeriodField;
-    @FXML
-    private TextArea outputArea;
     /**
      * Constructs a Frontend instance and initializes the student list
      * and course schedule.
@@ -750,18 +761,16 @@ public class Controller {
      */
     @FXML
     private void handleClose() {
-        String courseStr = offerCourseCodeField.getText();
-        Course course = parseCourse(courseStr);
-        String periodStr = offerPeriodField.getText();
-        Time time = parseTime(periodStr);
+        Course course = offerCourseCodeField.getValue();
+        Time time = offerPeriodField.getValue();
 
         if (course == null) {
-            print("INVALID: course name " + courseStr + " does not exist.");
+            print("INVALID: course name does not exist.");
             return;
         }
 
         if (time == null) {
-            print("INVALID: period " + periodStr + " does not exist.");
+            print("INVALID: period does not exist.");
             return;
         }
 
@@ -787,39 +796,36 @@ public class Controller {
      */
     @FXML
     private void handleOffer() {
-        if (offerCourseCodeField.getText().isEmpty() ||
-                offerPeriodField.getText().isEmpty() ||
-                offerInstructorField.getText().isEmpty() ||
-                offerRoomField.getText().isEmpty()) {
+        if (offerCourseCodeField.getValue() == null ||
+                offerPeriodField.getValue() == null ||
+                offerInstructorField.getValue() == null ||
+                offerRoomField.getValue() == null) {
 
             print("Invalid command.");
             return;
         }
-        String courseStr = offerCourseCodeField.getText();
-        Course course = parseCourse(courseStr);
-        if (course == null) { print("INVALID: course name " + courseStr + " does not exist."); return; }
-
-        String periodStr = offerPeriodField.getText();
-        Time time = parseTime(periodStr);
-        if (time == null) { print("INVALID: period " + periodStr + " does not exist."); return; }
-
-        if (findSection(course, time) != null) {
-            print("INVALID: " + course + " period " + time.getPeriod() + " already exists.");
+        Course course = offerCourseCodeField.getValue();
+        if (course == null) {
+            print("INVALID: no course selected.");
             return;
         }
 
-        String instructorStr = offerInstructorField.getText();
-        Instructor instructor = parseInstructor(instructorStr);
-        if (instructor == null) { print("INVALID: faculty " + instructorStr + " does not exist."); return;}
-
-        if (hasInstructorTimeConflict(instructor, time)) {
-            print("INVALID: " + instructor + " time conflict."); return;
+        Time time = offerPeriodField.getValue();
+        if (time == null) {
+            print("INVALID: no period selected.");
+            return;
         }
 
-        String roomStr = offerRoomField.getText().toUpperCase();
-        Classroom classroom = parseClassroom(roomStr);
+        Instructor instructor = offerInstructorField.getValue();
+        if (instructor == null) {
+            print("INVALID: no instructor selected.");
+            return;
+        }
+
+        Classroom classroom = offerRoomField.getValue();
         if (classroom == null) {
-            print("INVALID: location " + roomStr.toLowerCase() + " does not exist."); return;
+            print("INVALID: no classroom selected.");
+            return;
         }
 
         if (!isClassroomAvailable(classroom, time)) {
@@ -837,6 +843,7 @@ public class Controller {
      * Resident status: R=Resident, N=Non-Resident, T=Tristate, I=International
      * Invalid lines are skipped with a message.
      */
+    @FXML
     private void handleLoad() {
         File file = new File("students.txt");
         if (!file.exists()) {

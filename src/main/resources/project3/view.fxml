@@ -120,6 +120,11 @@
                 onAction="#handleDrop"
                 GridPane.rowIndex="5"
                 GridPane.columnIndex="2"/>
+        <!-- Button -->
+        <Button text="Load Students"
+                onAction="#handleLoad"
+                GridPane.rowIndex="5"
+                GridPane.columnIndex="3"/>
       </GridPane>
     </Tab>
 
@@ -131,19 +136,19 @@
 
         <!-- Course Code -->
         <Label text="Course Code:" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
-        <TextField fx:id="offerCourseCodeField" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+        <ComboBox fx:id="offerCourseCodeField" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
 
         <!-- Period -->
         <Label text="Period:" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
-        <TextField fx:id="offerPeriodField" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+        <ComboBox fx:id="offerPeriodField" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
 
         <!-- Instructor -->
         <Label text="Instructor:" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
-        <TextField fx:id="offerInstructorField" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+        <ComboBox fx:id="offerInstructorField" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
 
         <!-- Classroom -->
         <Label text="Classroom:" GridPane.rowIndex="3" GridPane.columnIndex="0"/>
-        <TextField fx:id="offerRoomField" GridPane.rowIndex="3" GridPane.columnIndex="1"/>
+        <ComboBox fx:id="offerRoomField" GridPane.rowIndex="3" GridPane.columnIndex="1"/>
 
         <!-- Button -->
         <Button text="Open Section"
@@ -153,7 +158,7 @@
         <Button text="Close Section"
                 onAction="#handleClose"
                 GridPane.rowIndex="4"
-                GridPane.columnIndex="1"/>
+                GridPane.columnIndex="2"/>
       </GridPane>
     </Tab>
 
