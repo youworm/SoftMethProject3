@@ -1,10 +1,10 @@
-package project3;
+package com.example.project3;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
-import project2.*;
-import util.Date;
-import util.Sort;
+import com.example.project3.project2.*;
+import com.example.project3.util.Date;
+import com.example.project3.util.Sort;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -108,6 +108,16 @@ public class Controller {
     @FXML
     private TextArea outputArea;
 
+    // Scholarship fields
+    @FXML
+    private TextField scholarshipFnameField;
+    @FXML
+    private TextField scholarshipLnameField;
+    @FXML
+    private TextField scholarshipDobField;
+    @FXML
+    private TextField scholarshipAmountField;
+
     /**
      * Initalizes the state of radio buttons and drop-downs.
      */
@@ -207,7 +217,7 @@ public class Controller {
      * Gets student type as a string
      * Helper method for handle tuition and handle add
      * @param student to get type from
-     * @return Tristate, Resident, Noresident, International study abroad, or International
+     * @return Tristate, Resident, Nonresident, International study abroad, or International
      */
     private static String getStudentType(Student student) {
         String studentType = "";
@@ -216,7 +226,7 @@ public class Controller {
         } else if (student instanceof International intl) {
             studentType = intl.isStudyAbroad() ? "International study abroad" : "International";
         } else if (student instanceof NonResident) {
-            studentType = "Noresident";
+            studentType = "Nonresident";
         } else if (student instanceof Resident) {
             studentType = "Resident";
         }
@@ -728,11 +738,9 @@ public class Controller {
      */
     @FXML
     private void handleDrop() {
-        Profile profile = new Profile(enrollFnameField.getText(), dropLnameField.getText(), parseDate(dropDobField.getText()));
-
+        Profile profile = new Profile(enrollFnameField.getText(), enrollLnameField.getText(), parseDate(enrollDobField.getText()));
         String courseStr = enrollCourseCodeField.getText();
         Course course = parseCourse(courseStr);
-
         String periodStr = enrollPeriodField.getText();
         Time time = parseTime(periodStr);
         Student student = findStudent(profile);
@@ -746,6 +754,12 @@ public class Controller {
             print("INVALID: period " + periodStr + " does not exist.");
             return;
         }
+
+        if (student == null) {
+            print("[" + profile + "] is not in the student list.");
+            return;
+        }
+
         Section section = findSection(course, time);
         if (section == null || !section.contains(student)) {
             print("[" + profile + "] is not enrolled in this section.");
@@ -889,7 +903,7 @@ public class Controller {
                             student = new Resident(profile, major, credits);
                             break;
                         case "N":
-                            studentType = "Noresident";
+                            studentType = "Nonresident";
                             student = new NonResident(profile, major, credits);
                             break;
                         case "T":
@@ -932,16 +946,17 @@ public class Controller {
      * Handles the S command to set scholarship for a Resident student.
      * Only full-time Resident students are eligible.
      *
-     * @param st the tokenizer containing the command tokens
      */
-    private void handleScholarship(StringTokenizer st) {
+    @FXML
+    private void handleScholarship() {
         try {
-            String fname = st.nextToken();
-            String lname = st.nextToken();
-            Date dob = parseDate(st.nextToken());
+            String fname = scholarshipFnameField.getText();
+            String lname = scholarshipLnameField.getText();
+            Date dob = parseDate(scholarshipDobField.getText());
+
             int amount;
             try {
-                amount = Integer.parseInt(st.nextToken());
+                amount = Integer.parseInt(scholarshipAmountField.getText());
             } catch (NumberFormatException e) {
                 print("INVALID: amount is not an integer.");
                 return;
@@ -950,29 +965,40 @@ public class Controller {
             Profile profile = new Profile(fname, lname, dob);
             Student student = findStudent(profile);
 
-            if (student == null) { print("[" + profile + "] is not in the student list."); return; }
+            if (student == null) {
+                print("[" + profile + "] is not in the student list.");
+                return;
+            }
 
             if (!(student instanceof Resident)) {
-                print("[" + profile + "] is a non-resident not eligible for the scholarship."); return;
+                print("[" + profile + "] is a non-resident not eligible for the scholarship.");
+                return;
             }
 
             Resident resident = (Resident) student;
+
             int enrolledCredits = 0;
             for (Section s : schedule.getSections()) {
-                if (s.contains(resident)) { enrolledCredits += s.getCourse().getCredits(); }
+                if (s != null && s.contains(resident)) {
+                    enrolledCredits += s.getCourse().getCredits();
+                }
             }
+
             if (enrolledCredits < 12) {
                 print("[" + profile + "] enrolled less than 12 credits, not eligible for the scholarship.");
                 return;
             }
+
             if (amount < 0 || amount > 10000) {
-                print("INVALID: scholarship amount cannot be 0 or negative or greater than $10,000.");
+                print("INVALID: scholarship amount cannot be negative or greater than $10,000.");
                 return;
             }
+
             resident.setScholarship(amount);
             print("Scholarship $" + String.format("%,d", amount) + " updated for [" + profile + "]");
+        } catch (Exception e) {
+            print("Invalid input.");
         }
-        catch (Exception e) { print("Invalid command."); }
     }
 
 
@@ -980,8 +1006,9 @@ public class Controller {
     /**
      * Prints all student's tuition by profile
      */
+    @FXML
     private void handleTuition() {
-        if (studentList.isEmpty()) { print("Schedule is empty!"); return; }
+        if (studentList.isEmpty()) { print("Student List is empty!"); return; }
 
         Sort.sortByProfile(studentList);
         print("* Tuition dues ordered by student. *");
@@ -1027,6 +1054,7 @@ public class Controller {
     /**
      * prints all students eligible for graduation
      */
+    @FXML
     private void handleGraduates() {
         StudentList graduates = new StudentList();
 

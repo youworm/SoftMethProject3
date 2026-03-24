@@ -1,8 +1,8 @@
-package util;
+package com.example.project3.util;
 
-import project2.Classroom;
-import project2.Section;
-import project2.Student;
+import com.example.project3.project2.Classroom;
+import com.example.project3.project2.Section;
+import com.example.project3.project2.Student;
 
 /**
  * Sort helper class

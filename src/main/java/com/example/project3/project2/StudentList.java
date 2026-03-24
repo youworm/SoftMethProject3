@@ -1,11 +1,11 @@
-package project2;
+package com.example.project3.project2;
 
-import util.List;
-import util.Sort;
+import com.example.project3.util.List;
+import com.example.project3.util.Sort;
 
 /**
  * Represents a list of students and methods to manage the list
- * uses generic util.List implementation
+ * uses generic com.example.project3.util.List implementation
  *
  * @author Joe Guan
  */

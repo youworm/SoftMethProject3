@@ -1,4 +1,4 @@
-package project2;
+package com.example.project3.project2;
 
 /**
  * TriState subclass of NonResident students

@@ -1,4 +1,4 @@
-package project3;
+package com.example.project3;
 
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
@@ -9,7 +9,7 @@ public class Main extends Application {
 
     @Override
     public void start(Stage stage) throws Exception {
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("view.fxml"));
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/view.fxml"));
         Scene scene = new Scene(loader.load());
 
         stage.setTitle("Student Registration System");

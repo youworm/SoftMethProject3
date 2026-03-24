@@ -1,6 +1,6 @@
-package project2;
+package com.example.project3.project2;
 
-import util.Date;
+import com.example.project3.util.Date;
 
 /**
  * Represents a single students profile

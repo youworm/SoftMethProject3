@@ -1,4 +1,4 @@
-package project2;
+package com.example.project3.project2;
 /**
  * International subclass of NonResident students
  * must pay admin and health insurance fee

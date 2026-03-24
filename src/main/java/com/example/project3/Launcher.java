@@ -1,4 +1,4 @@
-package project3;
+package com.example.project3;
 
 public class Launcher {
     public static void main(String[] args) {

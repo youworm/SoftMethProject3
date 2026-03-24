@@ -1,4 +1,4 @@
-package project2;
+package com.example.project3.project2;
 
 /**
  * Time class represents list of times available for sections

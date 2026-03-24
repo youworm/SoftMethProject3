@@ -1,4 +1,4 @@
-package project2;
+package com.example.project3.project2;
 
 /**
  * Represents a student with profile, major and credits completed

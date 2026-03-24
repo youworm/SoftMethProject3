@@ -1,4 +1,4 @@
-package project2;
+package com.example.project3.project2;
 /**
  * Represents all the courses offered in the system.
  * Each course contains credit information, standing prerequisite,
