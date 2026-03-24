@@ -45,6 +45,10 @@ public class International extends NonResident {
         return tuition;
     }
 
+    /**
+     * Checks if student is studying abroad
+     * @return true if student is studying abroad, false if not
+     */
     public boolean isStudyAbroad() {return isStudyAbroad;}
 
 }
